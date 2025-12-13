@@ -73,7 +73,7 @@ export const ColorHighlightPopoverButton = forwardRef<
     role="button"
     tabIndex={-1}
     aria-label="Highlight text"
-    tooltip="Highlight"
+    tooltip="Выделение"
     ref={ref}
     {...props}
   >
@@ -98,7 +98,7 @@ export function ColorHighlightPopoverContent({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const menuItems = useMemo(
-    () => [...colors, { label: "Remove highlight", value: "none" }],
+    () => [...colors, { label: "Убрать выделение", value: "none" }],
     [colors]
   )
 
@@ -144,7 +144,7 @@ export function ColorHighlightPopoverContent({
             <Button
               onClick={handleRemoveHighlight}
               aria-label="Remove highlight"
-              tooltip="Remove highlight"
+              tooltip="Убрать выделение"
               tabIndex={selectedIndex === colors.length ? 0 : -1}
               type="button"
               role="menuitem"

@@ -101,7 +101,7 @@ export const CodeBlockButton = forwardRef<
         tabIndex={-1}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip="Code Block"
+        tooltip="Блок кода"
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

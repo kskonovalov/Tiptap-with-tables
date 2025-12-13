@@ -121,7 +121,22 @@ export function shouldShowButton(props: {
  * Gets the formatted mark name
  */
 export function getFormattedMarkName(type: Mark): string {
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  switch (type) {
+    case "bold":
+      return "Жирный"
+    case "italic":
+      return "Курсив"
+    case "underline":
+      return "Подчёркнутый"
+    case "strike":
+      return "Зачёркнутый"
+    case "code":
+      return "Код"
+    case "superscript":
+      return "Надстрочный"
+    case "subscript":
+      return "Подстрочный"
+  }
 }
 
 /**
