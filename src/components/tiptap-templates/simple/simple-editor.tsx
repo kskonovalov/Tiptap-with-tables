@@ -13,6 +13,10 @@ import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
 import { Selection } from "@tiptap/extensions"
+import { Table } from "@tiptap/extension-table"
+import { TableRow } from "@tiptap/extension-table-row"
+import { TableHeader } from "@tiptap/extension-table-header"
+import { TableCell } from "@tiptap/extension-table-cell"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -33,6 +37,7 @@ import "@/components/tiptap-node/list-node/list-node.scss"
 import "@/components/tiptap-node/image-node/image-node.scss"
 import "@/components/tiptap-node/heading-node/heading-node.scss"
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
+import "@/components/tiptap-node/table-node/table-node.scss"
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
@@ -40,6 +45,8 @@ import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
+import { TableButton } from "@/components/tiptap-ui/table-button"
+import { TableActionsMenu } from "@/components/tiptap-ui/table-actions-menu"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -140,6 +147,8 @@ const MainToolbarContent = ({
       <ToolbarSeparator />
 
       <ToolbarGroup>
+        <TableButton />
+        <TableActionsMenu portal={isMobile} />
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
 
@@ -220,6 +229,12 @@ export function SimpleEditor() {
       Superscript,
       Subscript,
       Selection,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,

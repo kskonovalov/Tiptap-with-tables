@@ -1,0 +1,63 @@
+.tiptap.ProseMirror {
+  --table-border-color: var(--tt-gray-light-a-200);
+  --table-header-bg: var(--tt-gray-light-a-50);
+  --table-cell-selected-bg: var(--tt-gray-light-a-100);
+
+  .dark & {
+    --table-border-color: var(--tt-gray-dark-a-200);
+    --table-header-bg: var(--tt-gray-dark-a-50);
+    --table-cell-selected-bg: var(--tt-gray-dark-a-100);
+  }
+}
+
+/* =====================
+     TABLE
+     ===================== */
+.tiptap.ProseMirror {
+  table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 1.5rem 0;
+    overflow: hidden;
+
+    td,
+    th {
+      min-width: 1em;
+      border: 2px solid var(--table-border-color);
+      padding: 0.5rem 0.75rem;
+      vertical-align: top;
+      box-sizing: border-box;
+      position: relative;
+
+      > * {
+        margin-bottom: 0;
+      }
+    }
+
+    th {
+      font-weight: bold;
+      text-align: left;
+      background-color: var(--table-header-bg);
+    }
+
+    .selectedCell {
+      background-color: var(--table-cell-selected-bg);
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  .tableWrapper {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+
+  .resize-cursor {
+    cursor: ew-resize;
+    cursor: col-resize;
+  }
+}
+
