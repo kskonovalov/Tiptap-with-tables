@@ -1,0 +1,42 @@
+.tiptap.ProseMirror {
+  --file-bg-color: var(--tt-gray-light-a-50);
+  --file-border-color: var(--tt-gray-light-a-200);
+  --file-text-color: var(--tt-gray-light-a-900);
+  --file-hover-bg-color: var(--tt-gray-light-a-100);
+
+  .dark & {
+    --file-bg-color: var(--tt-gray-dark-a-50);
+    --file-border-color: var(--tt-gray-dark-a-200);
+    --file-text-color: var(--tt-gray-dark-a-900);
+    --file-hover-bg-color: var(--tt-gray-dark-a-100);
+  }
+}
+
+/* =====================
+     FILE NODE
+     ===================== */
+.tiptap.ProseMirror {
+  a[data-type="file"] {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    margin: 0.5rem 0;
+    background-color: var(--file-bg-color);
+    border: 1px solid var(--file-border-color);
+    border-radius: 0.375rem;
+    text-decoration: none;
+    color: var(--file-text-color);
+    transition:
+      background-color 0.2s,
+      border-color 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--file-hover-bg-color);
+    }
+
+    &:focus {
+      outline: 2px solid var(--file-border-color);
+      outline-offset: 2px;
+    }
+  }
+}

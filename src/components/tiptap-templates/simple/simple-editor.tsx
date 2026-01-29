@@ -30,14 +30,7 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
-import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
-import "@/components/tiptap-node/code-block-node/code-block-node.scss"
-import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss"
-import "@/components/tiptap-node/list-node/list-node.scss"
-import "@/components/tiptap-node/image-node/image-node.scss"
-import "@/components/tiptap-node/heading-node/heading-node.scss"
-import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
-import "@/components/tiptap-node/table-node/table-node.scss"
+import "@/components/tiptap-node/styles.scss"
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
@@ -193,6 +186,7 @@ const MobileToolbarContent = ({
 )
 
 export function SimpleEditor() {
+  const [readonly, setReadonly] = useState(false);
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -244,7 +238,8 @@ export function SimpleEditor() {
       }),
     ],
     content,
-  })
+    editable: false,
+  }, [readonly])
 
   const rect = useCursorVisibility({
     editor,
@@ -259,8 +254,11 @@ export function SimpleEditor() {
 
   return (
     <div className="simple-editor-wrapper">
+      <button onClick={() => setReadonly(!readonly)}>
+        {readonly ? "Readonly" : "Editable"}
+      </button>
       <EditorContext.Provider value={{ editor }}>
-        <Toolbar
+        {readonly ? <Toolbar
           ref={toolbarRef}
           style={{
             ...(isMobile
@@ -282,7 +280,7 @@ export function SimpleEditor() {
               onBack={() => setMobileView("main")}
             />
           )}
-        </Toolbar>
+        </Toolbar> : null}
 
         <EditorContent
           editor={editor}
