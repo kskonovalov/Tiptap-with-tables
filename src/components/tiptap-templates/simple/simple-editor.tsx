@@ -30,8 +30,6 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
-import { VideoNode } from "@/components/tiptap-node/video-node"
-import { VideoEmbedNode } from "@/components/tiptap-node/video-embed-node"
 import "@/components/tiptap-node/styles.scss"
 
 // --- Tiptap UI ---
@@ -42,7 +40,6 @@ import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
 import { TableButton } from "@/components/tiptap-ui/table-button"
 import { TableActionsMenu } from "@/components/tiptap-ui/table-actions-menu"
-import { VideoEmbedButton } from "@/components/tiptap-ui/video-embed-button"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -146,7 +143,6 @@ const MainToolbarContent = ({
         <TableButton />
         <TableActionsMenu portal={isMobile} />
         <ImageUploadButton text="Add" />
-        <VideoEmbedButton text="Video" />
       </ToolbarGroup>
 
       <Spacer />
@@ -233,8 +229,6 @@ export function SimpleEditor() {
       TableRow,
       TableHeader,
       TableCell,
-      VideoNode,
-      VideoEmbedNode,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
