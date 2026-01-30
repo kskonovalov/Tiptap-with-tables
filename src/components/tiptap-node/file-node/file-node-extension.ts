@@ -1,4 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core"
+import { ReactNodeViewRenderer } from "@tiptap/react"
+import { FileNodeComponent } from "@/components/tiptap-node/file-node/file-node"
 
 export interface FileNodeOptions {
   /**
@@ -85,6 +87,10 @@ export const FileNode = Node.create<FileNodeOptions>({
         tag: 'a[data-type="file"][href]',
       },
     ]
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(FileNodeComponent)
   },
 
   renderHTML({ HTMLAttributes }) {
