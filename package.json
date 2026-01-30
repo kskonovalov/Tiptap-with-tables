@@ -14,6 +14,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-popover": "^1.1.15",
     "@tiptap/core": "^3.13.0",
+    "@tiptap/extension-details": "^3.18.0",
     "@tiptap/extension-highlight": "^3.13.0",
     "@tiptap/extension-horizontal-rule": "^3.13.0",
     "@tiptap/extension-image": "^3.13.0",

@@ -17,6 +17,7 @@ import { Table } from "@tiptap/extension-table"
 import { TableRow } from "@tiptap/extension-table-row"
 import { TableHeader } from "@tiptap/extension-table-header"
 import { TableCell } from "@tiptap/extension-table-cell"
+import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -38,6 +39,7 @@ import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
+import { DetailsButton } from "@/components/tiptap-ui/details-button"
 import { TableButton } from "@/components/tiptap-ui/table-button"
 import { TableActionsMenu } from "@/components/tiptap-ui/table-actions-menu"
 import {
@@ -103,6 +105,7 @@ const MainToolbarContent = ({
         />
         <BlockquoteButton />
         <CodeBlockButton />
+        <DetailsButton />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -229,6 +232,9 @@ export function SimpleEditor() {
       TableRow,
       TableHeader,
       TableCell,
+      Details,
+      DetailsSummary,
+      DetailsContent,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
