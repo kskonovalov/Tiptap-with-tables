@@ -4,8 +4,8 @@ import { forwardRef, useCallback } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseVideoConfig } from "@/components/tiptap-ui/video-button"
-import { useVideo } from "@/components/tiptap-ui/video-button"
+import type { UseVideoEmbedConfig } from "@/components/tiptap-ui/video-embed-button"
+import { useVideoEmbed } from "@/components/tiptap-ui/video-embed-button"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
@@ -14,9 +14,9 @@ import { Button } from "@/components/tiptap-ui-primitive/button"
 type IconProps = React.SVGProps<SVGSVGElement>
 type IconComponent = ({ className, ...props }: IconProps) => React.ReactElement
 
-export interface VideoButtonProps
+export interface VideoEmbedButtonProps
   extends Omit<ButtonProps, "type">,
-    UseVideoConfig {
+    UseVideoEmbedConfig {
   /**
    * Optional text to display alongside the icon.
    */
@@ -28,9 +28,12 @@ export interface VideoButtonProps
 }
 
 /**
- * Button component for inserting video nodes in a Tiptap editor.
+ * Button component for inserting video embed nodes in a Tiptap editor.
  */
-export const VideoButton = forwardRef<HTMLButtonElement, VideoButtonProps>(
+export const VideoEmbedButton = forwardRef<
+  HTMLButtonElement,
+  VideoEmbedButtonProps
+>(
   (
     {
       editor: providedEditor,
@@ -45,19 +48,20 @@ export const VideoButton = forwardRef<HTMLButtonElement, VideoButtonProps>(
     ref
   ) => {
     const { editor } = useTiptapEditor(providedEditor)
-    const { isVisible, canInsert, handleVideo, label, Icon } = useVideo({
-      editor,
-      hideWhenUnavailable,
-      onInserted,
-    })
+    const { isVisible, canInsert, handleVideoEmbed, label, Icon } =
+      useVideoEmbed({
+        editor,
+        hideWhenUnavailable,
+        onInserted,
+      })
 
     const handleClick = useCallback(
       (event: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(event)
         if (event.defaultPrevented) return
-        handleVideo()
+        handleVideoEmbed()
       },
-      [handleVideo, onClick]
+      [handleVideoEmbed, onClick]
     )
 
     if (!isVisible) {
@@ -91,4 +95,4 @@ export const VideoButton = forwardRef<HTMLButtonElement, VideoButtonProps>(
   }
 )
 
-VideoButton.displayName = "VideoButton"
+VideoEmbedButton.displayName = "VideoEmbedButton"

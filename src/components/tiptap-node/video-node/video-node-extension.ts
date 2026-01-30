@@ -1,6 +1,4 @@
 import { mergeAttributes, Node } from "@tiptap/core"
-import { ReactNodeViewRenderer } from "@tiptap/react"
-import { VideoNodeComponent } from "@/components/tiptap-node/video-node/video-node"
 
 export interface VideoNodeOptions {
   /**
@@ -16,11 +14,10 @@ declare module "@tiptap/core" {
       /**
        * Set a video node
        */
-      setVideo: (options?: { content?: string }) => ReturnType
-      /**
-       * Update video content
-       */
-      updateVideoContent: (content: string) => ReturnType
+      setVideo: (options: {
+        src: string
+        type?: string
+      }) => ReturnType
     }
   }
 }
@@ -34,8 +31,6 @@ export const VideoNode = Node.create<VideoNodeOptions>({
 
   selectable: true,
 
-  atom: false,
-
   addOptions() {
     return {
       HTMLAttributes: {},
@@ -44,13 +39,17 @@ export const VideoNode = Node.create<VideoNodeOptions>({
 
   addAttributes() {
     return {
-      content: {
-        default: "",
-        parseHTML: (element) => element.getAttribute("data-content"),
+      src: {
+        default: null,
+        parseHTML: (element) => element.querySelector("source")?.getAttribute("src"),
         renderHTML: (attributes) => {
-          if (!attributes.content) return {}
-          return { "data-content": attributes.content }
+          if (!attributes.src) return {}
+          return {}
         },
+      },
+      type: {
+        default: "video/mp4",
+        parseHTML: (element) => element.querySelector("source")?.getAttribute("type"),
       },
     }
   },
@@ -58,66 +57,35 @@ export const VideoNode = Node.create<VideoNodeOptions>({
   parseHTML() {
     return [
       {
-        tag: 'div[data-type="video"]',
+        tag: "video",
       },
     ]
   },
 
   renderHTML({ HTMLAttributes }) {
-    const { content } = HTMLAttributes
-
     return [
-      "div",
+      "video",
       mergeAttributes(
         {
-          "data-type": "video",
-          class: "video-node-container",
+          controls: true,
+          style: "max-width: 100%; border-radius: 0.375rem;",
         },
         this.options.HTMLAttributes,
         HTMLAttributes
       ),
-      // Render content as HTML
-      content ? ["div", { innerHTML: content }] : ["div", {}, ""],
+      ["source", { src: HTMLAttributes.src, type: HTMLAttributes.type }],
     ]
-  },
-
-  addNodeView() {
-    return ReactNodeViewRenderer(VideoNodeComponent)
   },
 
   addCommands() {
     return {
       setVideo:
-        (options = {}) =>
+        (options) =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
-            attrs: {
-              content: options.content || "",
-            },
+            attrs: options,
           })
-        },
-      updateVideoContent:
-        (content: string) =>
-        ({ tr, state, dispatch }) => {
-          const { selection } = state
-          const node = selection.$from.node()
-
-          if (node && node.type.name === this.name) {
-            const pos = selection.$from.before()
-            const newAttrs = {
-              ...node.attrs,
-              content: node.attrs.content + content, // Append to existing content
-            }
-
-            if (dispatch) {
-              tr.setNodeMarkup(pos, undefined, newAttrs)
-            }
-
-            return true
-          }
-
-          return false
         },
     }
   },

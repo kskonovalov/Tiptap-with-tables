@@ -13,9 +13,9 @@ import { isNodeInSchema } from "@/lib/tiptap-utils"
 import { ImagePlusIcon } from "@/components/tiptap-icons/image-plus-icon"
 
 /**
- * Configuration for the video functionality
+ * Configuration for the video embed functionality
  */
-export interface UseVideoConfig {
+export interface UseVideoEmbedConfig {
   /**
    * The Tiptap editor instance.
    */
@@ -26,37 +26,37 @@ export interface UseVideoConfig {
    */
   hideWhenUnavailable?: boolean
   /**
-   * Callback function called after a successful video insertion.
+   * Callback function called after a successful video embed insertion.
    */
   onInserted?: () => void
 }
 
 /**
- * Checks if video can be inserted in the current editor state
+ * Checks if video embed can be inserted in the current editor state
  */
-export function canInsertVideo(editor: Editor | null): boolean {
+export function canInsertVideoEmbed(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false
-  if (!isNodeInSchema("video", editor)) return false
+  if (!isNodeInSchema("videoEmbed", editor)) return false
 
-  return editor.can().insertContent({ type: "video" })
+  return editor.can().insertContent({ type: "videoEmbed" })
 }
 
 /**
- * Inserts a video node in the editor
+ * Inserts a video embed node in the editor
  */
-export function insertVideo(editor: Editor | null): boolean {
+export function insertVideoEmbed(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false
-  if (!canInsertVideo(editor)) return false
+  if (!canInsertVideoEmbed(editor)) return false
 
   try {
-    return editor.chain().focus().setVideo().run()
+    return editor.chain().focus().setVideoEmbed().run()
   } catch {
     return false
   }
 }
 
 /**
- * Determines if the video button should be shown
+ * Determines if the video embed button should be shown
  */
 export function shouldShowButton(props: {
   editor: Editor | null
@@ -65,19 +65,19 @@ export function shouldShowButton(props: {
   const { editor, hideWhenUnavailable } = props
 
   if (!editor || !editor.isEditable) return false
-  if (!isNodeInSchema("video", editor)) return false
+  if (!isNodeInSchema("videoEmbed", editor)) return false
 
   if (hideWhenUnavailable && !editor.isActive("code")) {
-    return canInsertVideo(editor)
+    return canInsertVideoEmbed(editor)
   }
 
   return true
 }
 
 /**
- * Custom hook that provides video functionality for Tiptap editor
+ * Custom hook that provides video embed functionality for Tiptap editor
  */
-export function useVideo(config?: UseVideoConfig) {
+export function useVideoEmbed(config?: UseVideoEmbedConfig) {
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,
@@ -86,7 +86,7 @@ export function useVideo(config?: UseVideoConfig) {
 
   const { editor } = useTiptapEditor(providedEditor)
   const [isVisible, setIsVisible] = useState<boolean>(true)
-  const canInsert = canInsertVideo(editor)
+  const canInsert = canInsertVideoEmbed(editor)
 
   useEffect(() => {
     if (!editor) return
@@ -104,10 +104,10 @@ export function useVideo(config?: UseVideoConfig) {
     }
   }, [editor, hideWhenUnavailable])
 
-  const handleVideo = useCallback(() => {
+  const handleVideoEmbed = useCallback(() => {
     if (!editor) return false
 
-    const success = insertVideo(editor)
+    const success = insertVideoEmbed(editor)
     if (success) {
       onInserted?.()
     }
@@ -116,7 +116,7 @@ export function useVideo(config?: UseVideoConfig) {
 
   return {
     isVisible,
-    handleVideo,
+    handleVideoEmbed,
     canInsert,
     label: "Добавить видео",
     Icon: ImagePlusIcon,
