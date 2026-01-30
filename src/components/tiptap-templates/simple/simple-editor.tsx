@@ -30,6 +30,7 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
+import { VideoNode } from "@/components/tiptap-node/video-node"
 import "@/components/tiptap-node/styles.scss"
 
 // --- Tiptap UI ---
@@ -40,6 +41,7 @@ import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
 import { TableButton } from "@/components/tiptap-ui/table-button"
 import { TableActionsMenu } from "@/components/tiptap-ui/table-actions-menu"
+import { VideoButton } from "@/components/tiptap-ui/video-button"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -143,6 +145,7 @@ const MainToolbarContent = ({
         <TableButton />
         <TableActionsMenu portal={isMobile} />
         <ImageUploadButton text="Add" />
+        <VideoButton text="Video" />
       </ToolbarGroup>
 
       <Spacer />
@@ -229,6 +232,7 @@ export function SimpleEditor() {
       TableRow,
       TableHeader,
       TableCell,
+      VideoNode,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
@@ -238,7 +242,7 @@ export function SimpleEditor() {
       }),
     ],
     content,
-    editable: false,
+    editable: !readonly,
   }, [readonly])
 
   const rect = useCursorVisibility({
@@ -258,7 +262,7 @@ export function SimpleEditor() {
         {readonly ? "Readonly" : "Editable"}
       </button>
       <EditorContext.Provider value={{ editor }}>
-        {readonly ? <Toolbar
+        {!readonly ? <Toolbar
           ref={toolbarRef}
           style={{
             ...(isMobile

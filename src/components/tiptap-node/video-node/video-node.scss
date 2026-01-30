@@ -1,0 +1,120 @@
+.tiptap.ProseMirror {
+  --video-border-color: var(--tt-gray-light-a-200);
+  --video-bg-color: var(--tt-gray-light-a-50);
+  --video-textarea-bg: var(--white);
+  --video-text-color: var(--tt-gray-light-a-900);
+  --video-placeholder-color: var(--tt-gray-light-a-500);
+
+  .dark & {
+    --video-border-color: var(--tt-gray-dark-a-200);
+    --video-bg-color: var(--tt-gray-dark-a-50);
+    --video-textarea-bg: var(--tt-gray-dark-a-100);
+    --video-text-color: var(--tt-gray-dark-a-900);
+    --video-placeholder-color: var(--tt-gray-dark-a-500);
+  }
+}
+
+/* =====================
+     VIDEO NODE
+     ===================== */
+.tiptap.ProseMirror {
+  .video-node-wrapper {
+    margin: 1rem 0;
+  }
+
+  .video-node-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--video-placeholder-color);
+    border: 1px dashed var(--video-border-color);
+    border-radius: 0.375rem;
+  }
+
+  .video-node-content {
+    position: relative;
+    width: 100%;
+
+    iframe,
+    video {
+      max-width: 100%;
+      border-radius: 0.375rem;
+    }
+  }
+
+  .video-node-editable {
+    border: 1px solid var(--video-border-color);
+    border-radius: 0.375rem;
+    padding: 1rem;
+    background-color: var(--video-bg-color);
+  }
+
+  .video-node-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 1px solid var(--video-border-color);
+    border-radius: 0.375rem;
+    background-color: var(--video-textarea-bg);
+    color: var(--video-text-color);
+    font-family: "JetBrains Mono NL", monospace;
+    font-size: 0.875rem;
+    resize: vertical;
+    outline: none;
+
+    &::placeholder {
+      color: var(--video-placeholder-color);
+    }
+
+    &:focus {
+      border-color: var(--tt-gray-light-a-400);
+
+      .dark & {
+        border-color: var(--tt-gray-dark-a-400);
+      }
+    }
+  }
+
+  .video-node-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .video-node-upload-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .video-node-preview {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--video-border-color);
+  }
+
+  .video-node-preview-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--video-text-color);
+  }
+
+  .video-node-preview-content {
+    iframe,
+    video {
+      max-width: 100%;
+      border-radius: 0.375rem;
+    }
+  }
+
+  // Legacy HTML rendering
+  div[data-type="video"] {
+    margin: 1rem 0;
+
+    iframe,
+    video {
+      max-width: 100%;
+      border-radius: 0.375rem;
+    }
+  }
+}
