@@ -5,8 +5,6 @@ import { NodeViewWrapper, NodeViewContent } from "@tiptap/react"
 import "./warning-node.scss"
 
 export const WarningNodeComponent: React.FC<NodeViewProps> = (props) => {
-  const { editor } = props
-
   return (
     <NodeViewWrapper className="warning-wrapper">
       <div className="warning-container">
@@ -29,21 +27,7 @@ export const WarningNodeComponent: React.FC<NodeViewProps> = (props) => {
         </div>
 
         <div className="warning-content">
-          <div className="warning-title-wrapper">
-            <NodeViewContent
-              className="warning-title-content"
-              as="div"
-              data-node-view-content=""
-            />
-          </div>
-
-          <div className="warning-message-wrapper">
-            <NodeViewContent
-              className="warning-message-content"
-              as="div"
-              data-node-view-content=""
-            />
-          </div>
+          <NodeViewContent className="warning-inner" />
         </div>
       </div>
     </NodeViewWrapper>

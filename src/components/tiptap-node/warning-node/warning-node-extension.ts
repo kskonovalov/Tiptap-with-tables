@@ -73,14 +73,12 @@ export const WarningNode = Node.create<WarningNodeOptions>({
             content: [
               {
                 type: "warningTitle",
-                content: [{ type: "text", text: "Заголовок" }],
               },
               {
                 type: "warningMessage",
                 content: [
                   {
                     type: "paragraph",
-                    content: [{ type: "text", text: "Сообщение" }],
                   },
                 ],
               },

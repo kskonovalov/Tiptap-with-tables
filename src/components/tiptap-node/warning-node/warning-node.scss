@@ -58,15 +58,17 @@
     min-width: 0;
   }
 
-  .warning-title-wrapper {
-    margin-bottom: 0.5rem;
+  .warning-inner {
+    outline: none;
   }
 
-  .warning-title-content {
+  // Warning title styles
+  .warning-title {
     font-size: 1.125rem;
     font-weight: 700;
     color: var(--warning-title-color);
     line-height: 1.4;
+    margin-bottom: 0.5rem;
     outline: none;
 
     &:empty::before {
@@ -74,10 +76,8 @@
       color: var(--warning-title-color);
       opacity: 0.5;
       pointer-events: none;
-      position: absolute;
     }
 
-    // Preserve formatting
     strong {
       font-weight: 800;
     }
@@ -102,11 +102,8 @@
     }
   }
 
-  .warning-message-wrapper {
-    margin-top: 0.5rem;
-  }
-
-  .warning-message-content {
+  // Warning message styles
+  .warning-message {
     font-size: 1rem;
     color: var(--warning-message-color);
     line-height: 1.6;
@@ -127,7 +124,6 @@
       }
     }
 
-    // Preserve formatting
     strong {
       font-weight: 700;
     }
@@ -158,29 +154,6 @@
 
     li {
       margin: 0.25rem 0;
-    }
-  }
-
-  // Ensure proper nesting styles
-  div[data-warning="true"] {
-    .warning-title {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--warning-title-color);
-      margin-bottom: 0.5rem;
-    }
-
-    .warning-message {
-      font-size: 1rem;
-      color: var(--warning-message-color);
-
-      p {
-        margin: 0;
-
-        & + p {
-          margin-top: 0.5rem;
-        }
-      }
     }
   }
 }
