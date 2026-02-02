@@ -1,0 +1,100 @@
+.tiptap.ProseMirror {
+  --columns-gap: 1rem;
+  --columns-border-color: var(--tt-gray-light-a-200);
+
+  .dark & {
+    --columns-border-color: var(--tt-gray-dark-a-200);
+  }
+}
+
+/* =====================
+     COLUMNS NODE
+     ===================== */
+.tiptap.ProseMirror {
+  .columns {
+    display: grid;
+    gap: var(--columns-gap);
+    margin: 1rem 0;
+    
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .column-item {
+    border: 1px solid var(--columns-border-color);
+    border-radius: 0.375rem;
+    padding: 1rem;
+    min-height: 100px;
+
+    p {
+      margin: 0;
+
+      & + p {
+        margin-top: 0.5rem;
+      }
+    }
+
+    // Preserve formatting
+    strong {
+      font-weight: 700;
+    }
+
+    em {
+      font-style: italic;
+    }
+
+    a {
+      text-decoration: underline;
+    }
+
+    code {
+      background-color: rgba(0, 0, 0, 0.1);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      font-size: 0.875em;
+    }
+
+    ul,
+    ol {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin: 0.25rem 0;
+    }
+
+    // Placeholder для пустой колонки
+    &:has(p:only-child:empty) p:empty::before {
+      content: "Содержимое колонки...";
+      color: var(--tt-gray-light-a-500);
+      opacity: 0.5;
+      pointer-events: none;
+
+      .dark & {
+        color: var(--tt-gray-dark-a-500);
+      }
+    }
+  }
+
+  // Responsive: стек на мобильных
+  @media (max-width: 768px) {
+    .columns {
+      grid-template-columns: 1fr;
+    }
+  }
+}

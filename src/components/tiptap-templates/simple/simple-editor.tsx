@@ -33,8 +33,10 @@ import { ImageUploadNode } from "../../tiptap-node/image-upload-node/image-uploa
 import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
 import { AlertNode } from "../../tiptap-node/alert-node/index"
 import { WarningNode, WarningTitle, WarningMessage } from "../../tiptap-node/warning-node/index"
+import { ColumnsNode, ColumnItem } from "../../tiptap-node/columns-node/index"
 import "../../tiptap-node/alert-node/alert-node.scss"
 import "../../tiptap-node/warning-node/warning-node.scss"
+import "../../tiptap-node/columns-node/columns-node.scss"
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "../../tiptap-ui/heading-dropdown-menu/index"
@@ -45,6 +47,7 @@ import { CodeBlockButton } from "../../tiptap-ui/code-block-button/index"
 import { DetailsButton } from "../../tiptap-ui/details-button/index"
 import { AlertDropdownMenu } from "../../tiptap-ui/alert-dropdown-menu/index"
 import { WarningButton } from "../../tiptap-ui/warning-button/index"
+import { ColumnsDropdownMenu } from "../../tiptap-ui/columns-dropdown-menu/index"
 import { TableButton } from "../../tiptap-ui/table-button/index"
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
 import {
@@ -113,6 +116,7 @@ const MainToolbarContent = ({
         <DetailsButton />
         <AlertDropdownMenu portal={isMobile} />
         <WarningButton />
+        <ColumnsDropdownMenu portal={isMobile} />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -246,6 +250,8 @@ export function SimpleEditor() {
       WarningNode,
       WarningTitle,
       WarningMessage,
+      ColumnsNode,
+      ColumnItem,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
