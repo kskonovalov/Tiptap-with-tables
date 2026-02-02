@@ -1,9 +1,71 @@
 import { mergeAttributes, Node } from "@tiptap/core"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { WarningNodeComponent } from "./warning-node"
+import type { Editor } from "@tiptap/core"
 
 export interface WarningNodeOptions {
   HTMLAttributes: Record<string, any>
+}
+
+/**
+ * Helper to navigate between warning title and message on Tab
+ */
+function handleWarningTabNavigation(
+  editor: Editor,
+  currentNodeName: "warningTitle" | "warningMessage",
+  targetNodeName: "warningMessage" | "warningTitle"
+): boolean {
+  const { state } = editor
+  const { $from } = state.selection
+
+  // Найти родительский warning node
+  let warningDepth = -1
+  for (let d = $from.depth; d > 0; d--) {
+    if ($from.node(d).type.name === "warning") {
+      warningDepth = d
+      break
+    }
+  }
+
+  if (warningDepth === -1) return false
+
+  // Проверить что мы в currentNode
+  for (let d = $from.depth; d > warningDepth; d--) {
+    if ($from.node(d).type.name === currentNodeName) {
+      // Найти targetNode
+      const warningNode = $from.node(warningDepth)
+      let targetNode = null
+      let targetOffset = -1
+      
+      warningNode.forEach((child, offset) => {
+        if (child.type.name === targetNodeName && targetOffset === -1) {
+          targetNode = child
+          targetOffset = offset
+        }
+      })
+
+      if (targetNode && targetOffset >= 0) {
+        const absolutePos = $from.start(warningDepth) + targetOffset + 1
+        
+        // Для warningMessage (block content) нужно найти конец последнего параграфа
+        if (targetNodeName === "warningMessage") {
+          const lastChild = targetNode.lastChild
+          if (lastChild) {
+            const endPos = absolutePos + targetNode.content.size - lastChild.nodeSize + lastChild.content.size
+            editor.commands.focus(endPos)
+            return true
+          }
+        } else {
+          // Для warningTitle (inline content) просто конец контента
+          const endPos = absolutePos + targetNode.content.size
+          editor.commands.focus(endPos)
+          return true
+        }
+      }
+    }
+  }
+
+  return false
 }
 
 declare module "@tiptap/core" {
@@ -136,51 +198,7 @@ export const WarningTitle = Node.create({
 
   addKeyboardShortcuts() {
     return {
-      Tab: ({ editor }) => {
-        const { state } = editor
-        const { $from } = state.selection
-
-        // Найти родительский warning node
-        let warningDepth = -1
-        for (let d = $from.depth; d > 0; d--) {
-          if ($from.node(d).type.name === "warning") {
-            warningDepth = d
-            break
-          }
-        }
-
-        if (warningDepth === -1) return false
-
-        // Проверить что мы в warningTitle
-        for (let d = $from.depth; d > warningDepth; d--) {
-          if ($from.node(d).type.name === "warningTitle") {
-            // Найти позицию warningMessage и переместить в конец
-            const warningNode = $from.node(warningDepth)
-            let messageNode = null
-            let messageOffset = -1
-            
-            warningNode.forEach((child, offset) => {
-              if (child.type.name === "warningMessage" && messageOffset === -1) {
-                messageNode = child
-                messageOffset = offset
-              }
-            })
-
-            if (messageNode && messageOffset >= 0) {
-              const absolutePos = $from.start(warningDepth) + messageOffset + 1
-              // Найти последний параграф и переместить в его конец
-              const lastChild = messageNode.lastChild
-              if (lastChild) {
-                const endPos = absolutePos + messageNode.content.size - lastChild.nodeSize + lastChild.content.size
-                editor.commands.focus(endPos)
-                return true
-              }
-            }
-          }
-        }
-
-        return false
-      },
+      Tab: ({ editor }) => handleWarningTabNavigation(editor, "warningTitle", "warningMessage"),
     }
   },
 })
@@ -212,48 +230,7 @@ export const WarningMessage = Node.create({
 
   addKeyboardShortcuts() {
     return {
-      Tab: ({ editor }) => {
-        const { state } = editor
-        const { $from } = state.selection
-
-        // Найти родительский warning node
-        let warningDepth = -1
-        for (let d = $from.depth; d > 0; d--) {
-          if ($from.node(d).type.name === "warning") {
-            warningDepth = d
-            break
-          }
-        }
-
-        if (warningDepth === -1) return false
-
-        // Проверить что мы в warningMessage
-        for (let d = $from.depth; d > warningDepth; d--) {
-          if ($from.node(d).type.name === "warningMessage") {
-            // Найти позицию warningTitle и переместить в конец
-            const warningNode = $from.node(warningDepth)
-            let titleNode = null
-            let titleOffset = -1
-            
-            warningNode.forEach((child, offset) => {
-              if (child.type.name === "warningTitle" && titleOffset === -1) {
-                titleNode = child
-                titleOffset = offset
-              }
-            })
-
-            if (titleNode && titleOffset >= 0) {
-              const absolutePos = $from.start(warningDepth) + titleOffset + 1
-              // Переместить в конец title
-              const endPos = absolutePos + titleNode.content.size
-              editor.commands.focus(endPos)
-              return true
-            }
-          }
-        }
-
-        return false
-      },
+      Tab: ({ editor }) => handleWarningTabNavigation(editor, "warningMessage", "warningTitle"),
     }
   },
 })
