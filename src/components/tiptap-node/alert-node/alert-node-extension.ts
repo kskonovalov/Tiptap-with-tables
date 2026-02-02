@@ -100,8 +100,24 @@ export const AlertNode = Node.create<AlertNodeOptions>({
         },
       toggleAlert:
         (options) =>
-        ({ commands }) => {
-          return commands.toggleWrap(this.name, { type: options?.type || "info" })
+        ({ commands, editor }) => {
+          const type = options?.type || "info"
+          
+          // Если alert уже активен
+          if (editor.isActive(this.name)) {
+            const currentType = editor.getAttributes(this.name).type
+            
+            // Если тип совпадает - удалить alert
+            if (currentType === type) {
+              return commands.lift(this.name)
+            }
+            
+            // Если тип другой - обновить тип
+            return commands.updateAttributes(this.name, { type })
+          }
+          
+          // Если alert не активен - создать новый
+          return commands.wrapIn(this.name, { type })
         },
       updateAlertType:
         (type) =>
