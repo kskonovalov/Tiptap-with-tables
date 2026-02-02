@@ -32,7 +32,9 @@ import {
 import { ImageUploadNode } from "../../tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
 import { AlertNode } from "../../tiptap-node/alert-node/index"
+import { WarningNode, WarningTitle, WarningMessage } from "../../tiptap-node/warning-node/index"
 import "../../tiptap-node/alert-node/alert-node.scss"
+import "../../tiptap-node/warning-node/warning-node.scss"
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "../../tiptap-ui/heading-dropdown-menu/index"
@@ -42,6 +44,7 @@ import { BlockquoteButton } from "../../tiptap-ui/blockquote-button/index"
 import { CodeBlockButton } from "../../tiptap-ui/code-block-button/index"
 import { DetailsButton } from "../../tiptap-ui/details-button/index"
 import { AlertDropdownMenu } from "../../tiptap-ui/alert-dropdown-menu/index"
+import { WarningButton } from "../../tiptap-ui/warning-button/index"
 import { TableButton } from "../../tiptap-ui/table-button/index"
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
 import {
@@ -109,6 +112,7 @@ const MainToolbarContent = ({
         <CodeBlockButton />
         <DetailsButton />
         <AlertDropdownMenu portal={isMobile} />
+        <WarningButton />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -239,6 +243,9 @@ export function SimpleEditor() {
       DetailsSummary,
       DetailsContent,
       AlertNode,
+      WarningNode,
+      WarningTitle,
+      WarningMessage,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
