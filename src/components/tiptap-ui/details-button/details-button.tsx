@@ -1,15 +1,15 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Tiptap UI ---
-import type { UseDetailsConfig } from "@/components/tiptap-ui/details-button"
-import { useDetails } from "@/components/tiptap-ui/details-button"
+import type { UseDetailsConfig } from "./index"
+import { useDetails } from "./index"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
+import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
+import { Button } from "../../tiptap-ui-primitive/button/index"
 
 export interface DetailsButtonProps
   extends Omit<ButtonProps, "type">,

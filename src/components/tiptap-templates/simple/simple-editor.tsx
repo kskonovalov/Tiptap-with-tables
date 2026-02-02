@@ -20,64 +20,64 @@ import { TableCell } from "@tiptap/extension-table-cell"
 import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details"
 
 // --- UI Primitives ---
-import { Button } from "@/components/tiptap-ui-primitive/button"
-import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
+import { Button } from "../../tiptap-ui-primitive/button/index"
+import { Spacer } from "../../tiptap-ui-primitive/spacer/index"
 import {
   Toolbar,
   ToolbarGroup,
   ToolbarSeparator,
-} from "@/components/tiptap-ui-primitive/toolbar"
+} from "../../tiptap-ui-primitive/toolbar/index"
 
 // --- Tiptap Node ---
-import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
-import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
-import { AlertNode } from "@/components/tiptap-node/alert-node"
-import "@/components/tiptap-node/alert-node/alert-node.scss"
+import { ImageUploadNode } from "../../tiptap-node/image-upload-node/image-upload-node-extension"
+import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
+import { AlertNode } from "../../tiptap-node/alert-node/index"
+import "../../tiptap-node/alert-node/alert-node.scss"
 
 // --- Tiptap UI ---
-import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
-import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
-import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
-import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
-import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
-import { DetailsButton } from "@/components/tiptap-ui/details-button"
-import { AlertDropdownMenu } from "@/components/tiptap-ui/alert-dropdown-menu"
-import { TableButton } from "@/components/tiptap-ui/table-button"
-import { TableActionsMenu } from "@/components/tiptap-ui/table-actions-menu"
+import { HeadingDropdownMenu } from "../../tiptap-ui/heading-dropdown-menu/index"
+import { ImageUploadButton } from "../../tiptap-ui/image-upload-button/index"
+import { ListDropdownMenu } from "../../tiptap-ui/list-dropdown-menu/index"
+import { BlockquoteButton } from "../../tiptap-ui/blockquote-button/index"
+import { CodeBlockButton } from "../../tiptap-ui/code-block-button/index"
+import { DetailsButton } from "../../tiptap-ui/details-button/index"
+import { AlertDropdownMenu } from "../../tiptap-ui/alert-dropdown-menu/index"
+import { TableButton } from "../../tiptap-ui/table-button/index"
+import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
   ColorHighlightPopoverButton,
-} from "@/components/tiptap-ui/color-highlight-popover"
+} from "../../tiptap-ui/color-highlight-popover/index"
 import {
   LinkPopover,
   LinkContent,
   LinkButton,
-} from "@/components/tiptap-ui/link-popover"
-import { MarkButton } from "@/components/tiptap-ui/mark-button"
-import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
+} from "../../tiptap-ui/link-popover/index"
+import { MarkButton } from "../../tiptap-ui/mark-button/index"
+import { TextAlignButton } from "../../tiptap-ui/text-align-button/index"
+import { UndoRedoButton } from "../../tiptap-ui/undo-redo-button/index"
 
 // --- Icons ---
-import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
-import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon"
-import { LinkIcon } from "@/components/tiptap-icons/link-icon"
+import { ArrowLeftIcon } from "../../tiptap-icons/arrow-left-icon"
+import { HighlighterIcon } from "../../tiptap-icons/highlighter-icon"
+import { LinkIcon } from "../../tiptap-icons/link-icon"
 
 // --- Hooks ---
-import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
-import { useWindowSize } from "@/hooks/use-window-size"
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
+import { useIsBreakpoint } from "../../../hooks/use-is-breakpoint"
+import { useWindowSize } from "../../../hooks/use-window-size"
+import { useCursorVisibility } from "../../../hooks/use-cursor-visibility"
 
 // --- Components ---
-import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
+import { ThemeToggle } from "./theme-toggle"
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+import { handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils"
 
 // --- Styles ---
-import "@/components/tiptap-templates/simple/simple-editor.scss"
+import "./simple-editor.scss"
 
-import content from "@/components/tiptap-templates/simple/data/content.json"
+import content from "./data/content.json"
 
 const MainToolbarContent = ({
   onHighlighterClick,

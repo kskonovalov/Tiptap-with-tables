@@ -1,31 +1,31 @@
 import { forwardRef, useCallback, useState } from "react"
 
 // --- Icons ---
-import { ChevronDownIcon } from "@/components/tiptap-icons/chevron-down-icon"
+import { ChevronDownIcon } from "../../tiptap-icons/chevron-down-icon"
 
 // --- Styles ---
-import "@/components/tiptap-ui/alert-dropdown-menu/alert-dropdown-menu.scss"
+import "./alert-dropdown-menu.scss"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseAlertDropdownMenuConfig } from "@/components/tiptap-ui/alert-dropdown-menu"
-import { useAlertDropdownMenu } from "@/components/tiptap-ui/alert-dropdown-menu"
+import type { UseAlertDropdownMenuConfig } from "./index"
+import { useAlertDropdownMenu } from "./index"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
+import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
+import { Button } from "../../tiptap-ui-primitive/button/index"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/tiptap-ui-primitive/dropdown-menu"
-import { Card, CardBody } from "@/components/tiptap-ui-primitive/card"
+} from "../../tiptap-ui-primitive/dropdown-menu/index"
+import { Card, CardBody } from "../../tiptap-ui-primitive/card/index"
 
 // --- Types ---
-import type { AlertType } from "@/components/tiptap-node/alert-node"
+import type { AlertType } from "../../tiptap-node/alert-node/index"
 
 const ALERT_LABELS: Record<AlertType, string> = {
   primary: "Основное",

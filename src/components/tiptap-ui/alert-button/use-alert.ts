@@ -4,16 +4,16 @@ import { useCallback, useEffect, useState } from "react"
 import type { Editor } from "@tiptap/react"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- Icons ---
-import { AlertIcon } from "@/components/tiptap-icons/alert-icon"
+import { AlertIcon } from "../../tiptap-icons/alert-icon"
 
 // --- UI Utils ---
-import { isNodeInSchema } from "@/lib/tiptap-utils"
+import { isNodeInSchema } from "../../../lib/tiptap-utils"
 
 // --- Types ---
-import type { AlertType } from "@/components/tiptap-node/alert-node"
+import type { AlertType } from "../../tiptap-node/alert-node/index"
 
 /**
  * Configuration for the alert functionality

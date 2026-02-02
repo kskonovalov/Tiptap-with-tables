@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react"
 import type { Editor } from "@tiptap/react"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- Icons ---
-import { TableIcon } from "@/components/tiptap-icons/table-icon"
+import { TableIcon } from "../../tiptap-icons/table-icon"
 
 // --- UI Utils ---
-import { isNodeInSchema } from "@/lib/tiptap-utils"
+import { isNodeInSchema } from "../../../lib/tiptap-utils"
 
 /**
  * Configuration for the table functionality

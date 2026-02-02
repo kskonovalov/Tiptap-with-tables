@@ -1,19 +1,19 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
-import { parseShortcutKeys } from "@/lib/tiptap-utils"
+import { parseShortcutKeys } from "../../../lib/tiptap-utils"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap-ui-primitive/badge"
+import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
+import { Button } from "../../tiptap-ui-primitive/button/index"
+import { Badge } from "../../tiptap-ui-primitive/badge/index"
 
 // --- Tiptap UI ---
-import type { ListType, UseListConfig } from "@/components/tiptap-ui/list-button"
-import { LIST_SHORTCUT_KEYS, useList } from "@/components/tiptap-ui/list-button"
+import type { ListType, UseListConfig } from "./index"
+import { LIST_SHORTCUT_KEYS, useList } from "./index"
 
 export interface ListButtonProps
   extends Omit<ButtonProps, "type">,

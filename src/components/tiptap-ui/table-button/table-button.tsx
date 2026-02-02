@@ -1,15 +1,15 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Tiptap UI ---
-import type { UseTableConfig } from "@/components/tiptap-ui/table-button"
-import { useTable } from "@/components/tiptap-ui/table-button"
+import type { UseTableConfig } from "./index"
+import { useTable } from "./index"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
+import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
+import { Button } from "../../tiptap-ui-primitive/button/index"
 
 export interface TableButtonProps
   extends Omit<ButtonProps, "type">,
