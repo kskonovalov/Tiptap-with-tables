@@ -18,6 +18,7 @@ export type TableAction =
   | "deleteTable"
   | "mergeCells"
   | "splitCell"
+  | "toggleHeaderRow"
 
 export interface TableActionButtonProps extends Omit<ButtonProps, "type"> {
   editor?: Editor | null
@@ -36,6 +37,7 @@ const actionLabels: Record<TableAction, string> = {
   deleteTable: "Удалить таблицу",
   mergeCells: "Объединить ячейки",
   splitCell: "Разделить ячейку",
+  toggleHeaderRow: "Заголовки",
 }
 
 export const TableActionButton = forwardRef<
@@ -56,6 +58,42 @@ export const TableActionButton = forwardRef<
     const { editor } = useTiptapEditor(providedEditor)
 
     const isInTable = editor?.isActive("table") || false
+
+    // Проверить есть ли заголовки в таблице
+    const hasHeaderRow = useCallback(() => {
+      if (!editor) return false
+      
+      const { state } = editor
+      const { selection } = state
+      const { $from } = selection
+
+      // Найти table node
+      for (let d = $from.depth; d > 0; d--) {
+        const node = $from.node(d)
+        if (node.type.name === "table") {
+          const firstRow = node.firstChild
+          if (firstRow && firstRow.type.name === "tableRow") {
+            let hasHeader = false
+            firstRow.forEach((cell) => {
+              if (cell.type.name === "tableHeader") {
+                hasHeader = true
+              }
+            })
+            return hasHeader
+          }
+          break
+        }
+      }
+      return false
+    }, [editor])
+
+    // Динамический текст для toggleHeaderRow
+    const getActionLabel = useCallback(() => {
+      if (action === "toggleHeaderRow") {
+        return hasHeaderRow() ? "Убрать заголовки" : "Добавить заголовки"
+      }
+      return text || actionLabels[action]
+    }, [action, text, hasHeaderRow])
 
     const handleClick = useCallback(
       (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -92,6 +130,9 @@ export const TableActionButton = forwardRef<
             case "splitCell":
               editor.chain().focus().splitCell().run()
               break
+            case "toggleHeaderRow":
+              editor.chain().focus().toggleHeaderRow().run()
+              break
           }
         } catch (e) {
           console.error("Table action failed:", e)
@@ -104,6 +145,8 @@ export const TableActionButton = forwardRef<
       return null
     }
 
+    const label = getActionLabel()
+
     return (
       <Button
         type="button"
@@ -111,14 +154,14 @@ export const TableActionButton = forwardRef<
         role="button"
         tabIndex={-1}
         disabled={!editor}
-        aria-label={actionLabels[action]}
-        tooltip={showTooltip ? actionLabels[action] : undefined}
+        aria-label={label}
+        tooltip={showTooltip ? label : undefined}
         onClick={handleClick}
         {...buttonProps}
         ref={ref}
       >
         <span className="tiptap-button-text">
-          {text || actionLabels[action]}
+          {label}
         </span>
       </Button>
     )

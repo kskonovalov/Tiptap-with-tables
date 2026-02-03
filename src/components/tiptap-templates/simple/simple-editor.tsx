@@ -13,8 +13,6 @@ import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
 import { Selection } from "@tiptap/extensions"
-import { Table } from "@tiptap/extension-table"
-import { TableRow } from "@tiptap/extension-table-row"
 import { TableHeader } from "@tiptap/extension-table-header"
 import { TableCell } from "@tiptap/extension-table-cell"
 import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details"
@@ -35,9 +33,13 @@ import { AlertNode } from "../../tiptap-node/alert-node/index"
 import { WarningNode, WarningTitle, WarningMessage } from "../../tiptap-node/warning-node/index"
 import { ColumnsNode, ColumnItem } from "../../tiptap-node/columns-node/index"
 import { Color, TextStyle } from "../../tiptap-node/color-node/index"
+import { TableFilter } from "../../tiptap-node/table-filter-node/index"
+import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index"
 import "../../tiptap-node/alert-node/alert-node.scss"
 import "../../tiptap-node/warning-node/warning-node.scss"
 import "../../tiptap-node/columns-node/columns-node.scss"
+import "../../tiptap-node/table-node/table-node.scss"
+import "../../tiptap-node/table-filter-node/table-filter.scss"
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "../../tiptap-ui/heading-dropdown-menu/index"
@@ -240,10 +242,10 @@ export function SimpleEditor() {
       Superscript,
       Subscript,
       Selection,
-      Table.configure({
+      TableFilter.configure({
         resizable: true,
       }),
-      TableRow,
+      TableRowFilter,
       TableHeader,
       TableCell,
       Details,

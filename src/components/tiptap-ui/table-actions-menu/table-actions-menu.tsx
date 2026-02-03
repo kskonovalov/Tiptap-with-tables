@@ -135,6 +135,13 @@ export function TableActionsMenu({
                   showTooltip={false}
                 />
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <TableActionButton
+                  editor={editor}
+                  action="toggleHeaderRow"
+                  showTooltip={false}
+                />
+              </DropdownMenuItem>
             </ButtonGroup>
           </CardBody>
         </Card>
