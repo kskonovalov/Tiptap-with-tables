@@ -205,7 +205,7 @@ const MobileToolbarContent = ({
 )
 
 export function SimpleEditor() {
-  const [readonly, setReadonly] = useState(false);
+  const [readonly, setReadonly] = useState(true);
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(

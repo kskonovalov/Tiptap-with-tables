@@ -909,6 +909,11 @@
     },
     {
       "type": "table",
+      "attrs": {
+        "filters": {
+          "0": ["iPhone 15", "Apple Watch"]
+        }
+      },
       "content": [
         {
           "type": "tableRow",
@@ -1066,6 +1071,9 @@
         },
         {
           "type": "tableRow",
+          "attrs": {
+            "hidden": true
+          },
           "content": [
             {
               "type": "tableCell",
@@ -1297,6 +1305,9 @@
         },
         {
           "type": "tableRow",
+          "attrs": {
+            "hidden": true
+          },
           "content": [
             {
               "type": "tableCell",

@@ -204,24 +204,29 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
         let shouldHide = false
 
-        // Проверить каждую колонку с активными фильтрами
-        columnFilters.forEach((filters, colIndex) => {
-          const cells = row.querySelectorAll("td")
-          const cell = cells[colIndex] as HTMLElement
-          if (!cell) return
+        // Если есть активные фильтры, проверяем каждую колонку
+        if (columnFilters.size > 0) {
+          columnFilters.forEach((filters, colIndex) => {
+            const cells = row.querySelectorAll("td")
+            const cell = cells[colIndex] as HTMLElement
+            if (!cell) return
 
-          const cellText = cell.textContent?.trim() || ""
-          const filterOption = filters.find(f => f.value === cellText)
+            const cellText = cell.textContent?.trim() || ""
+            const filterOption = filters.find(f => f.value === cellText)
 
-          if (filterOption && !filterOption.checked) {
-            shouldHide = true
-          }
-        })
+            if (filterOption && !filterOption.checked) {
+              shouldHide = true
+            }
+          })
+        }
 
+        // Всегда обновляем класс и атрибут (показываем или скрываем)
         if (shouldHide) {
           row.classList.add("hidden")
+          row.setAttribute("data-hidden", "true")
         } else {
           row.classList.remove("hidden")
+          row.removeAttribute("data-hidden")
         }
       })
     }
