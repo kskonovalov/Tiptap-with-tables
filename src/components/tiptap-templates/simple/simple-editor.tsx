@@ -54,6 +54,7 @@ import { ColumnsDropdownMenu } from "../../tiptap-ui/columns-dropdown-menu/index
 import { ColorDropdownMenu } from "../../tiptap-ui/color-dropdown-menu/index"
 import { TableButton } from "../../tiptap-ui/table-button/index"
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
+import { BubbleMenu } from "../../tiptap-ui/bubble-menu/index"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -317,6 +318,8 @@ export function SimpleEditor() {
           role="presentation"
           className="simple-editor-content"
         />
+        
+        <BubbleMenu editor={editor} />
       </EditorContext.Provider>
     </div>
   )

@@ -1,0 +1,18 @@
+.bubble-menu {
+  background: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  z-index: 1000;
+
+  .dark & {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .bubble-menu-content {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+}
