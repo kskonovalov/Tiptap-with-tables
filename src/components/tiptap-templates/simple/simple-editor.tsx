@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
@@ -79,6 +79,7 @@ import { LinkIcon } from "../../tiptap-icons/link-icon"
 import { useIsBreakpoint } from "../../../hooks/use-is-breakpoint"
 import { useWindowSize } from "../../../hooks/use-window-size"
 import { useCursorVisibility } from "../../../hooks/use-cursor-visibility"
+import { useResponsiveToolbar } from "../../../hooks/use-responsive-toolbar"
 
 // --- Components ---
 import { ThemeToggle } from "./theme-toggle"
@@ -91,90 +92,85 @@ import "./simple-editor.scss"
 
 import content from "./data/content.json"
 
+interface ToolbarItem {
+  element: React.ReactNode
+  estimatedWidth: number
+}
+
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
   isMobile,
+  toolbarRef,
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
   isMobile: boolean
+  toolbarRef: React.RefObject<HTMLDivElement | null>
 }) => {
+  // Определяем все элементы toolbar (каждый элемент отдельно)
+  const toolbarItems: ToolbarItem[] = [
+    { element: <UndoRedoButton key="undo" action="undo" />, estimatedWidth: 32 },
+    { element: <UndoRedoButton key="redo" action="redo" />, estimatedWidth: 32 },
+    { element: <HeadingDropdownMenu key="heading" levels={[1, 2, 3, 4]} portal={isMobile} />, estimatedWidth: 50 },
+    { element: <ListDropdownMenu key="list" types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />, estimatedWidth: 50 },
+    { element: <AlertDropdownMenu key="alert" portal={isMobile} />, estimatedWidth: 50 },
+    { element: <ColumnsDropdownMenu key="columns" portal={isMobile} />, estimatedWidth: 50 },
+    { element: <MarkButton key="bold" type="bold" />, estimatedWidth: 32 },
+    { element: <MarkButton key="italic" type="italic" />, estimatedWidth: 32 },
+    { element: <MarkButton key="strike" type="strike" />, estimatedWidth: 32 },
+    { element: <MarkButton key="code" type="code" />, estimatedWidth: 32 },
+    { element: <MarkButton key="underline" type="underline" />, estimatedWidth: 32 },
+    { element: <ColorDropdownMenu key="color" portal={isMobile} />, estimatedWidth: 50 },
+    { element: !isMobile ? <ColorHighlightPopover key="highlight" /> : <ColorHighlightPopoverButton key="highlight" onClick={onHighlighterClick} />, estimatedWidth: 32 },
+    { element: !isMobile ? <LinkPopover key="link" /> : <LinkButton key="link" onClick={onLinkClick} />, estimatedWidth: 32 },
+    { element: <MarkButton key="superscript" type="superscript" />, estimatedWidth: 32 },
+    { element: <MarkButton key="subscript" type="subscript" />, estimatedWidth: 32 },
+    { element: <TextAlignButton key="left" align="left" />, estimatedWidth: 32 },
+    { element: <TextAlignButton key="center" align="center" />, estimatedWidth: 32 },
+    { element: <TextAlignButton key="right" align="right" />, estimatedWidth: 32 },
+    { element: <TextAlignButton key="justify" align="justify" />, estimatedWidth: 32 },
+    { element: <TableButton key="table" />, estimatedWidth: 32 },
+    { element: <TableActionsMenu key="table-actions" portal={isMobile} />, estimatedWidth: 50 },
+    { element: <ImageUploadButton key="image" text="Add" />, estimatedWidth: 60 },
+    { element: <BlockquoteButton key="blockquote" />, estimatedWidth: 32 },
+    { element: <CodeBlockButton key="codeblock" />, estimatedWidth: 32 },
+    { element: <DetailsButton key="details" />, estimatedWidth: 32 },
+    { element: <WarningButton key="warning" />, estimatedWidth: 32 },
+  ]
+
+  const { visibleItems, hiddenItems } = useResponsiveToolbar({
+    items: toolbarItems,
+    containerRef: toolbarRef,
+    overflowButtonWidth: 50,
+  })
+
   return (
     <>
       <Spacer />
 
-      <ToolbarGroup>
-        <UndoRedoButton action="undo" />
-        <UndoRedoButton action="redo" />
-      </ToolbarGroup>
+      {visibleItems.map((item: ToolbarItem, index: number) => (
+        <React.Fragment key={index}>
+          {item.element}
+        </React.Fragment>
+      ))}
 
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-        <ListDropdownMenu
-          types={["bulletList", "orderedList", "taskList"]}
-          portal={isMobile}
-        />
-        <ToolsDropdownMenu portal={isMobile}>
-          <BlockquoteButton />
-          <CodeBlockButton />
-          <DetailsButton />
-          <WarningButton />
-        </ToolsDropdownMenu>
-        <AlertDropdownMenu portal={isMobile} />
-        <ColumnsDropdownMenu portal={isMobile} />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <MarkButton type="bold" />
-        <MarkButton type="italic" />
-        <MarkButton type="strike" />
-        <MarkButton type="code" />
-        <MarkButton type="underline" />
-        <ColorDropdownMenu portal={isMobile} />
-        {!isMobile ? (
-          <ColorHighlightPopover />
-        ) : (
-          <ColorHighlightPopoverButton onClick={onHighlighterClick} />
-        )}
-        {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <MarkButton type="superscript" />
-        <MarkButton type="subscript" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <TextAlignButton align="left" />
-        <TextAlignButton align="center" />
-        <TextAlignButton align="right" />
-        <TextAlignButton align="justify" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <TableButton />
-        <TableActionsMenu portal={isMobile} />
-        <ImageUploadButton text="Add" />
-      </ToolbarGroup>
+      {hiddenItems.length > 0 && (
+        <>
+          <ToolbarSeparator />
+          <ToolsDropdownMenu portal={isMobile}>
+            {hiddenItems.map((item: ToolbarItem, index: number) => (
+              <React.Fragment key={index}>{item.element}</React.Fragment>
+            ))}
+          </ToolsDropdownMenu>
+        </>
+      )}
 
       <Spacer />
 
       {isMobile && <ToolbarSeparator />}
 
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
+      <ThemeToggle />
     </>
   )
 }
@@ -307,6 +303,7 @@ export function SimpleEditor() {
               onHighlighterClick={() => setMobileView("highlighter")}
               onLinkClick={() => setMobileView("link")}
               isMobile={isMobile}
+              toolbarRef={toolbarRef}
             />
           ) : (
             <MobileToolbarContent
