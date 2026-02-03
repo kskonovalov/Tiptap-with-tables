@@ -34,6 +34,7 @@ import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizonta
 import { AlertNode } from "../../tiptap-node/alert-node/index"
 import { WarningNode, WarningTitle, WarningMessage } from "../../tiptap-node/warning-node/index"
 import { ColumnsNode, ColumnItem } from "../../tiptap-node/columns-node/index"
+import { Color, TextStyle } from "../../tiptap-node/color-node/index"
 import "../../tiptap-node/alert-node/alert-node.scss"
 import "../../tiptap-node/warning-node/warning-node.scss"
 import "../../tiptap-node/columns-node/columns-node.scss"
@@ -48,6 +49,7 @@ import { DetailsButton } from "../../tiptap-ui/details-button/index"
 import { AlertDropdownMenu } from "../../tiptap-ui/alert-dropdown-menu/index"
 import { WarningButton } from "../../tiptap-ui/warning-button/index"
 import { ColumnsDropdownMenu } from "../../tiptap-ui/columns-dropdown-menu/index"
+import { ColorDropdownMenu } from "../../tiptap-ui/color-dropdown-menu/index"
 import { TableButton } from "../../tiptap-ui/table-button/index"
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
 import {
@@ -127,6 +129,7 @@ const MainToolbarContent = ({
         <MarkButton type="strike" />
         <MarkButton type="code" />
         <MarkButton type="underline" />
+        <ColorDropdownMenu portal={isMobile} />
         {!isMobile ? (
           <ColorHighlightPopover />
         ) : (
@@ -252,6 +255,8 @@ export function SimpleEditor() {
       WarningMessage,
       ColumnsNode,
       ColumnItem,
+      TextStyle,
+      Color,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,

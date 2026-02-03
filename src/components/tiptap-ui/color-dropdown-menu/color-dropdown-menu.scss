@@ -1,0 +1,17 @@
+.color-preview-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-preview-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid var(--tt-gray-light-a-200);
+  flex-shrink: 0;
+}
+
+.color-preview-label {
+  flex: 1;
+}
