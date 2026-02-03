@@ -55,6 +55,7 @@ import { ColorDropdownMenu } from "../../tiptap-ui/color-dropdown-menu/index"
 import { TableButton } from "../../tiptap-ui/table-button/index"
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
 import { BubbleMenu } from "../../tiptap-ui/bubble-menu/index"
+import { ToolsDropdownMenu } from "../../tiptap-ui/tools-dropdown-menu/index"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -116,11 +117,13 @@ const MainToolbarContent = ({
           types={["bulletList", "orderedList", "taskList"]}
           portal={isMobile}
         />
-        <BlockquoteButton />
-        <CodeBlockButton />
-        <DetailsButton />
+        <ToolsDropdownMenu portal={isMobile}>
+          <BlockquoteButton />
+          <CodeBlockButton />
+          <DetailsButton />
+          <WarningButton />
+        </ToolsDropdownMenu>
         <AlertDropdownMenu portal={isMobile} />
-        <WarningButton />
         <ColumnsDropdownMenu portal={isMobile} />
       </ToolbarGroup>
 
@@ -206,7 +209,7 @@ const MobileToolbarContent = ({
 )
 
 export function SimpleEditor() {
-  const [readonly, setReadonly] = useState(true);
+  const [readonly, setReadonly] = useState(false);
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
