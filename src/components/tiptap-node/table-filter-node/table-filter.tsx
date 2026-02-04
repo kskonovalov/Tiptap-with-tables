@@ -300,10 +300,14 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
           
           if (!rect || !wrapperRect) return null
 
+          // Проверяем, есть ли активные фильтры (снятые чекбоксы)
+          const filters = columnFilters.get(colIndex)
+          const hasActiveFilters = filters?.some(f => !f.checked) || false
+
           return (
             <button
               key={colIndex}
-              className="table-filter-button"
+              className={`table-filter-button ${hasActiveFilters ? 'active' : ''}`}
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

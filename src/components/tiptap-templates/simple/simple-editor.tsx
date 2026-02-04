@@ -33,6 +33,7 @@ import { AlertNode } from "../../tiptap-node/alert-node/index"
 import { WarningNode, WarningTitle, WarningMessage } from "../../tiptap-node/warning-node/index"
 import { ColumnsNode, ColumnItem } from "../../tiptap-node/columns-node/index"
 import { Color, TextStyle } from "../../tiptap-node/color-node/index"
+import { FontSize } from "../../tiptap-node/fontsize-node/index"
 import { TableFilter } from "../../tiptap-node/table-filter-node/index"
 import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index"
 import "../../tiptap-node/alert-node/alert-node.scss"
@@ -52,6 +53,7 @@ import { AlertDropdownMenu } from "../../tiptap-ui/alert-dropdown-menu/index"
 import { WarningButton } from "../../tiptap-ui/warning-button/index"
 import { ColumnsDropdownMenu } from "../../tiptap-ui/columns-dropdown-menu/index"
 import { ColorDropdownMenu } from "../../tiptap-ui/color-dropdown-menu/index"
+import { FontSizeDropdownMenu } from "../../tiptap-ui/fontsize-dropdown-menu/index"
 import { TableButton } from "../../tiptap-ui/table-button/index"
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index"
 import { BubbleMenu } from "../../tiptap-ui/bubble-menu/index"
@@ -122,6 +124,7 @@ const MainToolbarContent = ({
     { element: <MarkButton key="code" type="code" />, estimatedWidth: 32 },
     { element: <MarkButton key="underline" type="underline" />, estimatedWidth: 32 },
     { element: <ColorDropdownMenu key="color" portal={isMobile} />, estimatedWidth: 50 },
+    { element: <FontSizeDropdownMenu key="fontsize" portal={isMobile} />, estimatedWidth: 50 },
     { element: !isMobile ? <ColorHighlightPopover key="highlight" /> : <ColorHighlightPopoverButton key="highlight" onClick={onHighlighterClick} />, estimatedWidth: 32 },
     { element: !isMobile ? <LinkPopover key="link" /> : <LinkButton key="link" onClick={onLinkClick} />, estimatedWidth: 32 },
     { element: <MarkButton key="superscript" type="superscript" />, estimatedWidth: 32 },
@@ -259,6 +262,7 @@ export function SimpleEditor() {
       ColumnItem,
       TextStyle,
       Color,
+      FontSize,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
