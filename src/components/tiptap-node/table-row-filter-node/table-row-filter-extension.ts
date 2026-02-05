@@ -1,5 +1,4 @@
-import { mergeAttributes } from "@tiptap/core"
-import { TableRow } from "@tiptap/extension-table-row"
+import { TableRow } from "@tiptap/extension-table-row";
 
 export const TableRowFilter = TableRow.extend({
   name: "tableRow",
@@ -9,17 +8,12 @@ export const TableRowFilter = TableRow.extend({
       ...this.parent?.(),
       hidden: {
         default: false,
-        parseHTML: (element) => element.hasAttribute("data-hidden"),
+        parseHTML: (element) => element.getAttribute("data-hidden") === "true",
         renderHTML: (attributes) => {
-          if (!attributes.hidden) {
-            return {}
-          }
-          return {
-            "data-hidden": "true",
-            class: "hidden",
-          }
+          if (!attributes.hidden) return {};
+          return { "data-hidden": "true" };
         },
       },
-    }
+    };
   },
-})
+});

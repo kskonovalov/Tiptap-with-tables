@@ -507,6 +507,54 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     };
   }, [columnCount, node]);
 
+  // тк table row переопределён, на текущий момент это единственный способ добавить colgroup
+  // без colgroup ресайз таблиц работать не будет
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const table = wrapper.querySelector("table");
+    if (!table) return;
+
+    if (columnCount <= 0) return;
+
+    const ensureColgroup = () => {
+      const directColgroup = Array.from(table.children).find(
+        (el) => el.tagName === "COLGROUP",
+      ) as HTMLTableColElement | undefined;
+
+      const colgroup = directColgroup ?? document.createElement("colgroup");
+
+      if (!directColgroup) {
+        table.insertBefore(colgroup, table.firstChild);
+      }
+
+      const existingCols = Array.from(colgroup.querySelectorAll("col"));
+      const widths = existingCols.map(
+        (c) => (c as HTMLTableColElement).style.width,
+      );
+
+      if (existingCols.length !== columnCount) {
+        colgroup.innerHTML = "";
+        for (let i = 0; i < columnCount; i++) {
+          const col = document.createElement("col");
+          if (widths[i]) col.style.width = widths[i];
+          colgroup.appendChild(col);
+        }
+      }
+    };
+
+    const raf = requestAnimationFrame(() => ensureColgroup());
+    const t1 = window.setTimeout(() => ensureColgroup(), 0);
+    const t2 = window.setTimeout(() => ensureColgroup(), 50);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [columnCount]);
+
   // таблица "активна", если есть активная ячейка или открыто меню таблицы
   const tableIsActive = isEditable && (activeCell !== null || openTableMenu);
 
