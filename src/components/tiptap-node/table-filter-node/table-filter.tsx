@@ -1,6 +1,6 @@
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model"
+import { TextSelection } from "@tiptap/pm/state"
 
 interface FilterOption {
   value: string
@@ -14,8 +14,15 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 }) => {
   const [columnFilters, setColumnFilters] = useState<Map<number, FilterOption[]>>(new Map())
   const [openColumnIndex, setOpenColumnIndex] = useState<number | null>(null)
+  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null)
+  const [hoveredTable, setHoveredTable] = useState(false)
+  const [openRowMenu, setOpenRowMenu] = useState<number | null>(null)
+  const [openColMenu, setOpenColMenu] = useState<number | null>(null)
+  const [openTableMenu, setOpenTableMenu] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tableHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isEditable = editor.isEditable
 
   // Загрузить сохранённые фильтры из node.attrs при монтировании
@@ -135,7 +142,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       let rowIndex = 0
 
       // Пройти по всем строкам таблицы
-      tableNode.forEach((rowNode, offset) => {
+      tableNode.forEach((rowNode) => {
         if (rowNode.type.name === "tableRow") {
           // Пропустить первую строку (header)
           if (rowIndex > 0) {
@@ -239,19 +246,216 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
   // Нет useEffect для добавления кнопок - они будут отрисованы через React
 
-  // Click outside
+  // Отменить скрытие кнопок
+  const cancelHideButtons = useCallback(() => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current)
+      hideTimeoutRef.current = null
+    }
+  }, [])
+
+  // Запланировать скрытие кнопок
+  const scheduleHideButtons = useCallback(() => {
+    cancelHideButtons()
+    hideTimeoutRef.current = setTimeout(() => {
+      setHoveredCell(null)
+    }, 300)
+  }, [cancelHideButtons])
+
+  // Отменить скрытие кнопки таблицы
+  const cancelHideTableButton = useCallback(() => {
+    if (tableHideTimeoutRef.current) {
+      clearTimeout(tableHideTimeoutRef.current)
+      tableHideTimeoutRef.current = null
+    }
+  }, [])
+
+  // Запланировать скрытие кнопки таблицы
+  const scheduleHideTableButton = useCallback(() => {
+    cancelHideTableButton()
+    tableHideTimeoutRef.current = setTimeout(() => {
+      setHoveredTable(false)
+    }, 300)
+  }, [cancelHideTableButton])
+
+  // Установить курсор в ячейку
+  const setCellSelection = useCallback((rowIndex: number, colIndex: number) => {
+    if (!wrapperRef.current) return false
+
+    try {
+      const table = wrapperRef.current.querySelector("table")
+      if (!table) return false
+
+      const rows = table.querySelectorAll("tbody tr")
+      const row = rows[rowIndex]
+      if (!row) return false
+
+      const cells = row.querySelectorAll("td, th")
+      const cell = cells[colIndex] as HTMLElement
+      if (!cell) return false
+
+      const pos = editor.view.posAtDOM(cell, 0)
+
+      if (pos !== null && pos !== undefined) {
+        const resolvedPos = editor.state.doc.resolve(pos)
+        const cellPos = resolvedPos.pos
+        const $cell = editor.state.doc.resolve(cellPos)
+        const tr = editor.state.tr
+        const cellSelection = TextSelection.near($cell)
+        tr.setSelection(cellSelection)
+        editor.view.dispatch(tr)
+        editor.view.focus()
+      }
+      return true
+    } catch (e) {
+      console.error('setCellSelection error:', e)
+      return false
+    }
+  }, [editor])
+
+  // Действия со строками
+  const handleRowAction = useCallback((rowIndex: number, action: "addAbove" | "addBelow" | "delete") => {
+    if (!isEditable) return
+    setCellSelection(rowIndex, 0)
+    setTimeout(() => {
+      if (action === "addAbove") {
+        editor.chain().focus().addRowBefore().run()
+      } else if (action === "addBelow") {
+        editor.chain().focus().addRowAfter().run()
+      } else if (action === "delete") {
+        editor.chain().focus().deleteRow().run()
+      }
+    }, 100)
+    setOpenRowMenu(null)
+  }, [editor, isEditable, setCellSelection])
+
+  // Действия с колонками
+  const handleColAction = useCallback((colIndex: number, action: "addBefore" | "addAfter" | "delete") => {
+    if (!isEditable) return
+    setCellSelection(0, colIndex)
+    setTimeout(() => {
+      if (action === "addBefore") {
+        editor.chain().focus().addColumnBefore().run()
+      } else if (action === "addAfter") {
+        editor.chain().focus().addColumnAfter().run()
+      } else if (action === "delete") {
+        editor.chain().focus().deleteColumn().run()
+      }
+    }, 100)
+    setOpenColMenu(null)
+  }, [editor, isEditable, setCellSelection])
+
+  // Действия с таблицей
+  const handleTableAction = useCallback((action: "delete" | "toggleHeader") => {
+    if (!isEditable) return
+    
+    // Выделяем первую ячейку таблицы
+    setCellSelection(0, 0)
+    
+    setTimeout(() => {
+      if (action === "delete") {
+        editor.chain().focus().deleteTable().run()
+      } else if (action === "toggleHeader") {
+        editor.chain().focus().toggleHeaderRow().run()
+      }
+    }, 100)
+    
+    setOpenTableMenu(false)
+  }, [editor, isEditable, setCellSelection])
+
+  // Проверить, есть ли заголовки
+  const hasHeaderRow = useCallback(() => {
+    if (!node.firstChild) return false
+    let hasHeader = false
+    node.firstChild.forEach((cell) => {
+      if (cell.type.name === "tableHeader") {
+        hasHeader = true
+      }
+    })
+    return hasHeader
+  }, [node])
+
+  // Отслеживание hover на ячейках
   useEffect(() => {
-    if (openColumnIndex === null) return
+    if (!wrapperRef.current || !isEditable) return
+
+    const table = wrapperRef.current.querySelector("table")
+    if (!table) return
+
+    const handleMouseEnter = (e: Event) => {
+      const cell = e.target as HTMLElement
+      if (cell.tagName !== "TD" && cell.tagName !== "TH") return
+
+      cancelHideButtons()
+
+      const row = cell.parentElement as HTMLTableRowElement
+      const rowIndex = Array.from(table.querySelectorAll("tbody tr")).indexOf(row)
+      const colIndex = Array.from(row.children).indexOf(cell)
+
+      setHoveredCell({ row: rowIndex, col: colIndex })
+    }
+
+    const handleMouseLeave = () => {
+      scheduleHideButtons()
+    }
+
+    const cells = table.querySelectorAll("td, th")
+    cells.forEach(cell => {
+      cell.addEventListener("mouseenter", handleMouseEnter)
+    })
+
+    table.addEventListener("mouseleave", handleMouseLeave)
+
+    return () => {
+      cells.forEach(cell => {
+        cell.removeEventListener("mouseenter", handleMouseEnter)
+      })
+      table.removeEventListener("mouseleave", handleMouseLeave)
+    }
+  }, [isEditable, cancelHideButtons, scheduleHideButtons, node])
+
+  // Отслеживание hover на таблице
+  useEffect(() => {
+    if (!wrapperRef.current || !isEditable) return
+
+    const table = wrapperRef.current.querySelector("table")
+    if (!table) return
+
+    const handleTableEnter = () => {
+      cancelHideTableButton()
+      setHoveredTable(true)
+    }
+
+    const handleTableLeave = () => {
+      scheduleHideTableButton()
+    }
+
+    table.addEventListener("mouseenter", handleTableEnter)
+    table.addEventListener("mouseleave", handleTableLeave)
+
+    return () => {
+      table.removeEventListener("mouseenter", handleTableEnter)
+      table.removeEventListener("mouseleave", handleTableLeave)
+    }
+  }, [isEditable, cancelHideTableButton, scheduleHideTableButton])
+
+  // Click outside для всех меню
+  useEffect(() => {
+    if (openColumnIndex === null && openRowMenu === null && openColMenu === null && !openTableMenu) return
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const clickedInside = (e.target as HTMLElement).closest('.table-filter-dropdown, .table-control-menu')
+      if (!clickedInside) {
         setOpenColumnIndex(null)
+        setOpenRowMenu(null)
+        setOpenColMenu(null)
+        setOpenTableMenu(false)
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [openColumnIndex])
+  }, [openColumnIndex, openRowMenu, openColMenu, openTableMenu])
 
   const currentFilters = openColumnIndex !== null ? columnFilters.get(openColumnIndex) : []
   const columnCount = getColumnCount()
@@ -358,6 +562,205 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
                 </label>
               ))}
             </div>
+          </div>
+        )
+      })()}
+
+      {/* Кнопка управления таблицей (слева сверху) */}
+      {isEditable && hoveredTable && (() => {
+        const table = wrapperRef.current?.querySelector("table")
+        const rect = table?.getBoundingClientRect()
+        const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+        
+        if (!rect || !wrapperRect) return null
+
+        return (
+          <button
+            className="table-main-control-button"
+            contentEditable={false}
+            onMouseEnter={cancelHideTableButton}
+            onMouseLeave={scheduleHideTableButton}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setOpenTableMenu(!openTableMenu)
+              setOpenRowMenu(null)
+              setOpenColMenu(null)
+            }}
+            type="button"
+            style={{
+              position: "absolute",
+              top: `${rect.top - wrapperRect.top - 28}px`,
+              left: `${rect.left - wrapperRect.left - 28}px`,
+            }}
+          >
+            ⋮
+          </button>
+        )
+      })()}
+
+      {/* Меню действий с таблицей */}
+      {isEditable && openTableMenu && (() => {
+        const table = wrapperRef.current?.querySelector("table")
+        const rect = table?.getBoundingClientRect()
+        const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+        
+        if (!rect || !wrapperRect) return null
+
+        const hasHeader = hasHeaderRow()
+
+        return (
+          <div
+            className="table-control-menu"
+            contentEditable={false}
+            style={{
+              position: "absolute",
+              top: `${rect.top - wrapperRect.top - 28}px`,
+              left: `${rect.left - wrapperRect.left}px`,
+            }}
+          >
+            <button onClick={() => handleTableAction("toggleHeader")}>
+              {hasHeader ? "Убрать заголовки" : "Добавить заголовки"}
+            </button>
+            <button onClick={() => handleTableAction("delete")}>
+              Удалить таблицу
+            </button>
+          </div>
+        )
+      })()}
+
+      {/* Кнопки управления строками (слева) */}
+      {isEditable && hoveredCell && (() => {
+        const table = wrapperRef.current?.querySelector("table")
+        const rows = table?.querySelectorAll("tbody tr")
+        const row = rows?.[hoveredCell.row] as HTMLElement
+        const rect = row?.getBoundingClientRect()
+        const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+        
+        if (!rect || !wrapperRect) return null
+
+        return (
+          <button
+            className="table-row-control-button"
+            contentEditable={false}
+            onMouseEnter={cancelHideButtons}
+            onMouseLeave={scheduleHideButtons}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setOpenRowMenu(openRowMenu === hoveredCell.row ? null : hoveredCell.row)
+              setOpenColMenu(null)
+            }}
+            type="button"
+            style={{
+              position: "absolute",
+              top: `${rect.top - wrapperRect.top + rect.height / 2 - 12}px`,
+              left: `${rect.left - wrapperRect.left - 28}px`,
+            }}
+          >
+            ⋮
+          </button>
+        )
+      })()}
+
+      {/* Меню действий со строкой */}
+      {isEditable && openRowMenu !== null && (() => {
+        const table = wrapperRef.current?.querySelector("table")
+        const rows = table?.querySelectorAll("tbody tr")
+        const row = rows?.[openRowMenu] as HTMLElement
+        const rect = row?.getBoundingClientRect()
+        const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+        
+        if (!rect || !wrapperRect) return null
+
+        return (
+          <div
+            className="table-control-menu"
+            contentEditable={false}
+            style={{
+              position: "absolute",
+              top: `${rect.top - wrapperRect.top}px`,
+              left: `${rect.left - wrapperRect.left - 180}px`,
+            }}
+          >
+            <button onClick={() => handleRowAction(openRowMenu, "addAbove")}>
+              Добавить строку выше
+            </button>
+            <button onClick={() => handleRowAction(openRowMenu, "addBelow")}>
+              Добавить строку ниже
+            </button>
+            <button onClick={() => handleRowAction(openRowMenu, "delete")}>
+              Удалить строку
+            </button>
+          </div>
+        )
+      })()}
+
+      {/* Кнопки управления колонками (сверху) */}
+      {isEditable && hoveredCell && (() => {
+        const table = wrapperRef.current?.querySelector("table")
+        const firstRow = table?.querySelector("tbody tr:first-child")
+        const cells = firstRow?.querySelectorAll("th, td")
+        const cell = cells?.[hoveredCell.col] as HTMLElement
+        const rect = cell?.getBoundingClientRect()
+        const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+        
+        if (!rect || !wrapperRect) return null
+
+        return (
+          <button
+            className="table-col-control-button"
+            contentEditable={false}
+            onMouseEnter={cancelHideButtons}
+            onMouseLeave={scheduleHideButtons}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setOpenColMenu(openColMenu === hoveredCell.col ? null : hoveredCell.col)
+              setOpenRowMenu(null)
+            }}
+            type="button"
+            style={{
+              position: "absolute",
+              top: `${rect.top - wrapperRect.top - 28}px`,
+              left: `${rect.left - wrapperRect.left + rect.width / 2 - 12}px`,
+            }}
+          >
+            ⋮
+          </button>
+        )
+      })()}
+
+      {/* Меню действий с колонкой */}
+      {isEditable && openColMenu !== null && (() => {
+        const table = wrapperRef.current?.querySelector("table")
+        const firstRow = table?.querySelector("tbody tr:first-child")
+        const cells = firstRow?.querySelectorAll("th, td")
+        const cell = cells?.[openColMenu] as HTMLElement
+        const rect = cell?.getBoundingClientRect()
+        const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+        
+        if (!rect || !wrapperRect) return null
+
+        return (
+          <div
+            className="table-control-menu"
+            contentEditable={false}
+            style={{
+              position: "absolute",
+              top: `${rect.top - wrapperRect.top - 120}px`,
+              left: `${rect.left - wrapperRect.left}px`,
+            }}
+          >
+            <button onClick={() => handleColAction(openColMenu, "addBefore")}>
+              Добавить колонку слева
+            </button>
+            <button onClick={() => handleColAction(openColMenu, "addAfter")}>
+              Добавить колонку справа
+            </button>
+            <button onClick={() => handleColAction(openColMenu, "delete")}>
+              Удалить колонку
+            </button>
           </div>
         )
       })()}
