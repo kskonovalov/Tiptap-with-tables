@@ -112,6 +112,17 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     });
   }, []);
 
+  // Сбросить фильтры для колонки
+  const resetColumnFilters = useCallback((colIndex: number) => {
+    setColumnFilters((prev) => {
+      const newFilters = new Map(prev);
+      const columnFilter = newFilters.get(colIndex) || [];
+      const updated = columnFilter.map((f) => ({ ...f, checked: true }));
+      newFilters.set(colIndex, updated);
+      return newFilters;
+    });
+  }, []);
+
   // Открыть фильтр для колонки
   const handleFilterClick = useCallback(
     (colIndex: number) => {
@@ -634,6 +645,15 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
                     <span>{filter.value === "" ? "Пустое" : filter.value}</span>
                   </label>
                 ))}
+              </div>
+              <div className="table-filter-actions">
+                <button
+                  type="button"
+                  onClick={() => resetColumnFilters(openColumnIndex)}
+                  className="table-filter-reset-button"
+                >
+                  Сбросить фильтры
+                </button>
               </div>
             </div>
           );

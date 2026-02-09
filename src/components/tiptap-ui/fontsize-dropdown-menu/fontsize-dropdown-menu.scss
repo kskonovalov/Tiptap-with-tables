@@ -15,3 +15,13 @@
   color: var(--tt-text-secondary);
   font-family: monospace;
 }
+
+/* Active state highlighting for selected font size */
+[data-radix-dropdown-menu-item][data-active="true"] {
+  background-color: var(--tt-button-active-bg-color);
+  color: var(--tt-button-active-text-color);
+  
+  .fontsize-preview-value {
+    color: var(--tt-button-active-text-color);
+  }
+}

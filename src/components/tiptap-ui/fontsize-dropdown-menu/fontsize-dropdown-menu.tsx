@@ -80,10 +80,22 @@ export const FontSizeDropdownMenu = forwardRef<
 
     const handleSelect = useCallback(
       (fontSize: string) => {
-        handleSet(fontSize)
+        // Toggle: if clicking the same font size, unset it
+        const isCurrentlySelected = 
+          currentFontSize === fontSize || 
+          (fontSize === "1em" && !currentFontSize)
+        
+        if (isCurrentlySelected) {
+          // Unset font size
+          if (editor) {
+            editor.chain().focus().unsetFontSize().run()
+          }
+        } else {
+          handleSet(fontSize)
+        }
         setIsOpen(false)
       },
-      [handleSet]
+      [handleSet, currentFontSize, editor]
     )
 
     if (!isVisible) {
