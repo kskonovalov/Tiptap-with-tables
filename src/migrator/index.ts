@@ -2,18 +2,19 @@ import {
   EditorJSData,
   EditorJSBlock,
   TipTapDocument,
-  TipTapNode
-} from './types';
+  TipTapNode,
+} from "./types";
 import {
   editorjsParagraphToTiptap,
-  tiptapParagraphToEditorjs
-} from './converters/paragraph';
+  tiptapParagraphToEditorjs,
+} from "./converters/paragraph";
 
 /**
  * Converts EditorJS data to TipTap document format
+ * Parses HTML formatting from EditorJS (bold, italic, links, etc.) into TipTap marks
  *
  * Supported block types:
- * - paragraph / customParagraph: Converts to TipTap paragraph with alignment support
+ * - paragraph / customParagraph: Converts to TipTap paragraph with alignment and text formatting
  *
  * @example
  * const editorjsData = {
@@ -21,7 +22,7 @@ import {
  *     {
  *       type: 'customParagraph',
  *       data: {
- *         text: 'Hello World',
+ *         text: 'Hello <b>world</b> with <i>formatting</i>!',
  *         alignment: 'center'
  *       }
  *     }
@@ -29,7 +30,7 @@ import {
  * };
  *
  * const tiptapDoc = editorjsToTiptap(editorjsData);
- * // Returns: { type: 'doc', content: [...] }
+ * // Returns TipTap document with properly structured marks
  *
  * @param editorjsData - EditorJS data object
  * @returns TipTap document
@@ -39,7 +40,7 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
 
   for (const block of editorjsData.blocks) {
     // Handle paragraph and customParagraph blocks
-    if (block.type === 'paragraph' || block.type === 'customParagraph') {
+    if (block.type === "paragraph" || block.type === "customParagraph") {
       content.push(editorjsParagraphToTiptap(block));
     }
     // Add more block type handlers here as needed
@@ -50,16 +51,17 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
   }
 
   return {
-    type: 'doc',
-    content
+    type: "doc",
+    content,
   };
 }
 
 /**
  * Converts TipTap document to EditorJS data format
+ * Converts TipTap marks back to HTML tags in EditorJS text fields
  *
  * Supported node types:
- * - paragraph: Converts to EditorJS paragraph block with alignment support
+ * - paragraph: Converts to EditorJS paragraph block with alignment and HTML formatting
  *
  * @example
  * const tiptapDoc = {
@@ -84,18 +86,16 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
 export function tiptapToEditorjs(
   tiptapDoc: TipTapDocument,
   options: {
-    paragraphBlockType?: 'paragraph' | 'customParagraph';
-  } = {}
+    paragraphBlockType?: "paragraph" | "customParagraph";
+  } = {},
 ): EditorJSData {
-  const {
-    paragraphBlockType = 'paragraph'
-  } = options;
+  const { paragraphBlockType = "paragraph" } = options;
 
   const blocks: EditorJSBlock[] = [];
 
   for (const node of tiptapDoc.content) {
     // Handle paragraph nodes
-    if (node.type === 'paragraph') {
+    if (node.type === "paragraph") {
       blocks.push(tiptapParagraphToEditorjs(node, paragraphBlockType));
     }
     // Add more node type handlers here as needed
@@ -108,15 +108,15 @@ export function tiptapToEditorjs(
   return {
     time: Date.now(),
     blocks,
-    version: '2.28.0'
+    version: "2.28.0",
   };
 }
 
 // Re-export types for convenience
-export * from './types';
+export * from "./types";
 
 // Re-export specific converters for advanced usage
 export {
   editorjsParagraphToTiptap,
-  tiptapParagraphToEditorjs
-} from './converters/paragraph';
+  tiptapParagraphToEditorjs,
+} from "./converters/paragraph";
