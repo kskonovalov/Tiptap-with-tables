@@ -2,7 +2,7 @@ import { TipTapMark, TipTapTextNode } from './types';
 
 /**
  * Parses HTML string from EditorJS into TipTap text nodes with marks
- * Handles common HTML tags: <b>, <strong>, <i>, <em>, <u>, <s>, <code>, <mark>, <a>, <sup>, <sub>
+ * Handles common HTML tags: <b>, <strong>, <i>, <em>, <u>, <s>, <code>, <mark>, <a>, <span>, <sup>, <sub>
  *
  * @example
  * parseHTMLToTipTapNodes('Hello <b>world</b>!')
@@ -60,12 +60,28 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
             marks.push({ type: 'code' });
             break;
           case 'mark':
-            const color = current.getAttribute('data-color') ||
-                         current.getAttribute('style')?.match(/background-color:\s*([^;]+)/)?.[1] ||
-                         'var(--tt-color-highlight-yellow)';
+            const style = current.getAttribute('style') || '';
+            const bgColor = current.getAttribute('data-color') ||
+                           style.match(/background-color:\s*([^;]+)/)?.[1] ||
+                           'var(--tt-color-highlight-yellow)';
+            const textColor = style.match(/color:\s*([^;]+)/)?.[1];
+            const className = current.getAttribute('class');
+
+            const highlightAttrs: { color: string; textColor?: string; class?: string | null } = {
+              color: bgColor.trim()
+            };
+
+            if (textColor) {
+              highlightAttrs.textColor = textColor.trim();
+            }
+
+            if (className) {
+              highlightAttrs.class = className;
+            }
+
             marks.push({
               type: 'highlight',
-              attrs: { color: color.trim() }
+              attrs: highlightAttrs
             });
             break;
           case 'a':
@@ -87,6 +103,18 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
             break;
           case 'sub':
             marks.push({ type: 'subscript' });
+            break;
+          case 'span':
+            const spanStyle = current.getAttribute('style');
+            if (spanStyle) {
+              const spanColor = spanStyle.match(/color:\s*([^;]+)/)?.[1];
+              if (spanColor) {
+                marks.push({
+                  type: 'textColor',
+                  attrs: { color: spanColor.trim() }
+                });
+              }
+            }
             break;
         }
 
@@ -163,7 +191,30 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
       case 'code':
         return { type: 'code' };
       case 'mark':
-        return { type: 'highlight', attrs: { color: 'var(--tt-color-highlight-yellow)' } };
+        const styleMatch = attrs.match(/style=["']([^"']+)["']/);
+        const classMatch = attrs.match(/class=["']([^"']+)["']/);
+        const highlightAttrs: { color: string; textColor?: string; class?: string } = {
+          color: 'var(--tt-color-highlight-yellow)'
+        };
+
+        if (styleMatch) {
+          const styleContent = styleMatch[1];
+          const bgColorMatch = styleContent.match(/background-color:\s*([^;]+)/);
+          const textColorMatch = styleContent.match(/color:\s*([^;]+)/);
+
+          if (bgColorMatch) {
+            highlightAttrs.color = bgColorMatch[1].trim();
+          }
+          if (textColorMatch) {
+            highlightAttrs.textColor = textColorMatch[1].trim();
+          }
+        }
+
+        if (classMatch) {
+          highlightAttrs.class = classMatch[1];
+        }
+
+        return { type: 'highlight', attrs: highlightAttrs };
       case 'a':
         const hrefMatch = attrs.match(/href=["']([^"']+)["']/);
         if (hrefMatch) {
@@ -177,6 +228,18 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
         return { type: 'superscript' };
       case 'sub':
         return { type: 'subscript' };
+      case 'span':
+        const spanStyleMatch = attrs.match(/style=["']([^"']+)["']/);
+        if (spanStyleMatch) {
+          const spanColor = spanStyleMatch[1].match(/color:\s*([^;]+)/)?.[1];
+          if (spanColor) {
+            return {
+              type: 'textColor',
+              attrs: { color: spanColor.trim() }
+            };
+          }
+        }
+        return null;
       default:
         return null;
     }
@@ -266,7 +329,7 @@ export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
     // Apply marks in reverse order (innermost first)
     // Sort marks to ensure consistent nesting order
     const sortedMarks = [...marks].sort((a, b) => {
-      const order = ['link', 'highlight', 'code', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript'];
+      const order = ['link', 'highlight', 'textColor', 'code', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript'];
       return order.indexOf(a.type) - order.indexOf(b.type);
     });
 
@@ -288,8 +351,17 @@ export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
           text = `<code>${text}</code>`;
           break;
         case 'highlight':
-          const color = mark.attrs?.color || 'var(--tt-color-highlight-yellow)';
-          text = `<mark style="background-color: ${color}">${text}</mark>`;
+          const bgColor = mark.attrs?.color || 'var(--tt-color-highlight-yellow)';
+          const textColor = mark.attrs?.textColor;
+          const className = mark.attrs?.class;
+
+          const styleAttr = textColor
+            ? `background-color: ${bgColor}; color: ${textColor}`
+            : `background-color: ${bgColor}`;
+
+          const classAttr = className ? ` class="${className}"` : '';
+
+          text = `<mark style="${styleAttr}"${classAttr}>${text}</mark>`;
           break;
         case 'link':
           const href = mark.attrs?.href || '#';
@@ -301,6 +373,10 @@ export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
           break;
         case 'subscript':
           text = `<sub>${text}</sub>`;
+          break;
+        case 'textColor':
+          const color = mark.attrs?.color || '#000000';
+          text = `<span style="color: ${color}">${text}</span>`;
           break;
       }
     });
