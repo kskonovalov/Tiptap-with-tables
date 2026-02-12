@@ -1,404 +1,454 @@
 import { TipTapMark, TipTapTextNode } from './types';
 
 /**
- * Parses HTML string from EditorJS into TipTap text nodes with marks
- * Handles common HTML tags: <b>, <strong>, <i>, <em>, <u>, <s>, <code>, <mark>, <a>, <span>, <sup>, <sub>
+ * EditorJS HTML -> TipTap text nodes
+ * IMPORTANT: This converter uses TipTap standard text color mark:
+ *   { type: 'textStyle', attrs: { color: '#ff0000' } }
  *
- * @example
- * parseHTMLToTipTapNodes('Hello <b>world</b>!')
- * // Returns: [
- * //   { type: 'text', text: 'Hello ' },
- * //   { type: 'text', text: 'world', marks: [{ type: 'bold' }] },
- * //   { type: 'text', text: '!' }
- * // ]
+ * To render it in TipTap, your editor MUST include:
+ *   - @tiptap/extension-text-style
+ *   - @tiptap/extension-color
  */
 export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
-  if (!html) return [];
+  if (html === '' || html == null) return [];
 
-  // If no HTML tags, return simple text node
   if (!/<[^>]+>/.test(html)) {
     return [{ type: 'text', text: html }];
   }
 
   const nodes: TipTapTextNode[] = [];
 
-  // Use DOMParser if available (browser environment)
-  if (typeof DOMParser !== 'undefined') {
+  const pushText = (text: string, marks: TipTapMark[]) => {
+    if (text === '') return;
+
+    const normalizedMarks = normalizeMarks(marks);
+    const prev = nodes[nodes.length - 1];
+
+    if (prev && prev.type === 'text' && areMarksEqual(prev.marks || [], normalizedMarks)) {
+      prev.text += text;
+      return;
+    }
+
+    const newNode: TipTapTextNode = { type: 'text', text };
+    if (normalizedMarks.length > 0) newNode.marks = normalizedMarks;
+    nodes.push(newNode);
+  };
+
+  // Browser DOMParser path
+  if (typeof DOMParser !== 'undefined' && typeof document !== 'undefined') {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
-    const container = doc.body.firstChild;
+    const container = doc.body.firstElementChild;
 
-    if (!container) {
-      return [{ type: 'text', text: html }];
-    }
+    if (!container) return [{ type: 'text', text: html }];
 
-    function extractMarksFromElement(element: Element): TipTapMark[] {
-      const marks: TipTapMark[] = [];
-      let current: Element | null = element;
+    const marksFromElement = (el: Element): TipTapMark[] => {
+      const tagName = el.tagName.toLowerCase();
 
-      while (current && current.nodeName !== 'DIV') {
-        const tagName = current.nodeName.toLowerCase();
+      if (tagName === 'b' || tagName === 'strong') return [{ type: 'bold' }];
+      if (tagName === 'i' || tagName === 'em') return [{ type: 'italic' }];
+      if (tagName === 'u') return [{ type: 'underline' }];
+      if (tagName === 's' || tagName === 'strike' || tagName === 'del') return [{ type: 'strike' }];
+      if (tagName === 'code') return [{ type: 'code' }];
+      if (tagName === 'sup') return [{ type: 'superscript' }];
+      if (tagName === 'sub') return [{ type: 'subscript' }];
 
-        switch (tagName) {
-          case 'b':
-          case 'strong':
-            marks.push({ type: 'bold' });
-            break;
-          case 'i':
-          case 'em':
-            marks.push({ type: 'italic' });
-            break;
-          case 'u':
-            marks.push({ type: 'underline' });
-            break;
-          case 's':
-          case 'strike':
-          case 'del':
-            marks.push({ type: 'strike' });
-            break;
-          case 'code':
-            marks.push({ type: 'code' });
-            break;
-          case 'mark':
-            const style = current.getAttribute('style') || '';
-            const bgColor = current.getAttribute('data-color') ||
-                           style.match(/background-color:\s*([^;]+)/)?.[1];
-            const textColor = style.match(/color:\s*([^;]+)/)?.[1];
-            const className = current.getAttribute('class');
-
-            // If only text color (no background), treat as textColor mark
-            if (textColor && !bgColor) {
-              marks.push({
-                type: 'textColor',
-                attrs: { color: textColor.trim() }
-              });
-            } else {
-              // Has background color, treat as highlight
-              const highlightAttrs: { color: string; textColor?: string; class?: string | null } = {
-                color: (bgColor || 'var(--tt-color-highlight-yellow)').trim()
-              };
-
-              if (textColor) {
-                highlightAttrs.textColor = textColor.trim();
-              }
-
-              if (className) {
-                highlightAttrs.class = className;
-              }
-
-              marks.push({
-                type: 'highlight',
-                attrs: highlightAttrs
-              });
-            }
-            break;
-          case 'a':
-            const href = current.getAttribute('href');
-            if (href) {
-              marks.push({
-                type: 'link',
-                attrs: {
-                  href,
-                  target: current.getAttribute('target') || '_blank',
-                  rel: 'noopener noreferrer nofollow',
-                  class: null
-                }
-              });
-            }
-            break;
-          case 'sup':
-            marks.push({ type: 'superscript' });
-            break;
-          case 'sub':
-            marks.push({ type: 'subscript' });
-            break;
-          case 'span':
-            const spanStyle = current.getAttribute('style');
-            if (spanStyle) {
-              const spanColor = spanStyle.match(/color:\s*([^;]+)/)?.[1];
-              if (spanColor) {
-                marks.push({
-                  type: 'textColor',
-                  attrs: { color: spanColor.trim() }
-                });
-              }
-            }
-            break;
-        }
-
-        current = current.parentElement;
+      if (tagName === 'a') {
+        const href = el.getAttribute('href');
+        if (!href) return [];
+        return [
+          {
+            type: 'link',
+            attrs: {
+              href,
+              target: el.getAttribute('target') || '_blank',
+              rel: el.getAttribute('rel') || 'noopener noreferrer nofollow',
+              class: el.getAttribute('class') || null,
+            },
+          },
+        ];
       }
 
-      return marks;
-    }
+      if (tagName === 'mark') {
+        const style = el.getAttribute('style') || '';
+        const dataColor = el.getAttribute('data-color') || '';
+        const bgColor =
+          (dataColor && dataColor.trim() !== '' ? dataColor : '') ||
+          (style.match(/background-color:\s*([^;]+)/i)?.[1] || '');
+        const textColor = style.match(/color:\s*([^;]+)/i)?.[1] || '';
+        const className = el.getAttribute('class');
 
-    function processNode(node: Node, parentMarks: TipTapMark[] = []): void {
+        // If only text color (no bg), treat as textStyle (TipTap Color)
+        if (textColor.trim() !== '' && bgColor.trim() === '') {
+          return [{ type: 'textStyle', attrs: { color: textColor.trim() } }];
+        }
+
+        const attrs: Record<string, any> = {
+          color: (bgColor.trim() !== '' ? bgColor.trim() : 'var(--tt-color-highlight-yellow)'),
+        };
+
+        if (textColor.trim() !== '') attrs.textColor = textColor.trim();
+        if (className && className.trim() !== '') attrs.class = className;
+
+        return [{ type: 'highlight', attrs }];
+      }
+
+      if (tagName === 'span') {
+        const style = el.getAttribute('style') || '';
+        const color = style.match(/color:\s*([^;]+)/i)?.[1] || '';
+        if (color.trim() !== '') {
+          return [{ type: 'textStyle', attrs: { color: color.trim() } }];
+        }
+        return [];
+      }
+
+      return [];
+    };
+
+    const walk = (node: Node, inheritedMarks: TipTapMark[]) => {
       if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent || '';
-        if (text) {
-          const existingNode = nodes[nodes.length - 1];
+        if (text !== '') pushText(text, inheritedMarks);
+        return;
+      }
 
-          // Merge with previous node if marks are identical
-          if (existingNode && areMarksEqual(existingNode.marks || [], parentMarks)) {
-            existingNode.text += text;
-          } else {
-            const newNode: TipTapTextNode = { type: 'text', text };
-            if (parentMarks.length > 0) {
-              newNode.marks = parentMarks;
-            }
-            nodes.push(newNode);
-          }
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as Element;
-        const marks = extractMarksFromElement(element);
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
 
-        // Process child nodes
-        Array.from(element.childNodes).forEach(child => {
-          processNode(child, marks);
-        });
+      const el = node as Element;
+      const ownMarks = marksFromElement(el);
+      const combined = normalizeMarks([...inheritedMarks, ...ownMarks]);
+
+      const childNodes = Array.from(el.childNodes);
+      for (const child of childNodes) {
+        walk(child, combined);
+      }
+    };
+
+    const childNodes = Array.from(container.childNodes);
+    for (const child of childNodes) {
+      walk(child, []);
+    }
+
+    return nodes.length > 0 ? nodes : [{ type: 'text', text: '' }];
+  }
+
+  // Node.js fallback (regex)
+  return parseHTMLSimple(html);
+}
+
+/**
+ * Node.js fallback HTML -> TipTap text nodes (basic)
+ * Supports nested tags via a stack
+ */
+function parseHTMLSimple(html: string): TipTapTextNode[] {
+  const nodes: TipTapTextNode[] = [];
+  const tagPattern = /<(\/?)([a-zA-Z][\w:-]*)([^>]*)>/g;
+
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = null;
+
+  const markStack: TipTapMark[] = [];
+
+  const pushText = (text: string) => {
+    if (text === '') return;
+    const normalized = normalizeMarks(markStack);
+
+    const prev = nodes[nodes.length - 1];
+    if (prev && prev.type === 'text' && areMarksEqual(prev.marks || [], normalized)) {
+      prev.text += text;
+      return;
+    }
+
+    const node: TipTapTextNode = { type: 'text', text };
+    if (normalized.length > 0) node.marks = normalized;
+    nodes.push(node);
+  };
+
+  const parseStyleAttr = (attrs: string): string => {
+    const m = attrs.match(/style\s*=\s*["']([^"']+)["']/i);
+    return m ? m[1] : '';
+  };
+
+  const parseAttr = (attrs: string, name: string): string => {
+    const re = new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i');
+    const m = attrs.match(re);
+    return m ? m[1] : '';
+  };
+
+  const tagToMark = (tagNameRaw: string, attrs: string): TipTapMark | null => {
+    const tagName = tagNameRaw.toLowerCase();
+
+    if (tagName === 'b' || tagName === 'strong') return { type: 'bold' };
+    if (tagName === 'i' || tagName === 'em') return { type: 'italic' };
+    if (tagName === 'u') return { type: 'underline' };
+    if (tagName === 's' || tagName === 'strike' || tagName === 'del') return { type: 'strike' };
+    if (tagName === 'code') return { type: 'code' };
+    if (tagName === 'sup') return { type: 'superscript' };
+    if (tagName === 'sub') return { type: 'subscript' };
+
+    if (tagName === 'a') {
+      const href = parseAttr(attrs, 'href');
+      if (href === '') return null;
+
+      const target = parseAttr(attrs, 'target') || '_blank';
+      const rel = parseAttr(attrs, 'rel') || 'noopener noreferrer nofollow';
+      const className = parseAttr(attrs, 'class');
+
+      return {
+        type: 'link',
+        attrs: {
+          href,
+          target,
+          rel,
+          class: className !== '' ? className : null,
+        },
+      };
+    }
+
+    if (tagName === 'span') {
+      const style = parseStyleAttr(attrs);
+      const color = style.match(/color:\s*([^;]+)/i)?.[1] || '';
+      if (color.trim() === '') return null;
+      return { type: 'textStyle', attrs: { color: color.trim() } };
+    }
+
+    if (tagName === 'mark') {
+      const style = parseStyleAttr(attrs);
+      const className = parseAttr(attrs, 'class');
+      const bgColor = style.match(/background-color:\s*([^;]+)/i)?.[1] || '';
+      const textColor = style.match(/color:\s*([^;]+)/i)?.[1] || '';
+
+      if (textColor.trim() !== '' && bgColor.trim() === '') {
+        return { type: 'textStyle', attrs: { color: textColor.trim() } };
+      }
+
+      const outAttrs: Record<string, any> = {
+        color: (bgColor.trim() !== '' ? bgColor.trim() : 'var(--tt-color-highlight-yellow)'),
+      };
+
+      if (textColor.trim() !== '') outAttrs.textColor = textColor.trim();
+      if (className.trim() !== '') outAttrs.class = className;
+
+      return { type: 'highlight', attrs: outAttrs };
+    }
+
+    return null;
+  };
+
+  const removeMatchingMark = (mark: TipTapMark) => {
+    // remove the LAST matching mark (proper nesting)
+    for (let i = markStack.length - 1; i >= 0; i--) {
+      const m = markStack[i];
+      if (m.type === mark.type && stableStringify(m.attrs) === stableStringify(mark.attrs)) {
+        markStack.splice(i, 1);
+        return;
       }
     }
 
-    Array.from(container.childNodes).forEach(child => {
-      processNode(child);
-    });
-  } else {
-    // Fallback for Node.js environment - simple regex-based parsing
-    nodes.push(...parseHTMLSimple(html));
+    // fallback: remove last by type only (handles cases when attrs weren't captured)
+    for (let i = markStack.length - 1; i >= 0; i--) {
+      if (markStack[i].type === mark.type) {
+        markStack.splice(i, 1);
+        return;
+      }
+    }
+  };
+
+  while ((match = tagPattern.exec(html)) !== null) {
+    if (match.index > lastIndex) {
+      pushText(html.substring(lastIndex, match.index));
+    }
+
+    const isClosing = match[1] === '/';
+    const tagName = match[2];
+    const attrs = match[3] || '';
+
+    if (!isClosing) {
+      const mark = tagToMark(tagName, attrs);
+      if (mark) markStack.push(mark);
+    } else {
+      const closingMark = tagToMark(tagName, attrs) || tagToMark(tagName, '');
+      if (closingMark) removeMatchingMark(closingMark);
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < html.length) {
+    pushText(html.substring(lastIndex));
   }
 
   return nodes.length > 0 ? nodes : [{ type: 'text', text: '' }];
 }
 
 /**
- * Simple HTML parser fallback for Node.js environments
- * Handles basic nested tags
- */
-function parseHTMLSimple(html: string): TipTapTextNode[] {
-  const nodes: TipTapTextNode[] = [];
-  const tagPattern = /<(\/?)(\w+)([^>]*)>/g;
-  let lastIndex = 0;
-  let match;
-  const markStack: TipTapMark[] = [];
-
-  const tagToMark = (tag: string, attrs: string): TipTapMark | null => {
-    switch (tag.toLowerCase()) {
-      case 'b':
-      case 'strong':
-        return { type: 'bold' };
-      case 'i':
-      case 'em':
-        return { type: 'italic' };
-      case 'u':
-        return { type: 'underline' };
-      case 's':
-      case 'strike':
-      case 'del':
-        return { type: 'strike' };
-      case 'code':
-        return { type: 'code' };
-      case 'mark':
-        const styleMatch = attrs.match(/style=["']([^"']+)["']/);
-        const classMatch = attrs.match(/class=["']([^"']+)["']/);
-
-        let bgColorMatch = null;
-        let textColorMatch = null;
-
-        if (styleMatch) {
-          const styleContent = styleMatch[1];
-          bgColorMatch = styleContent.match(/background-color:\s*([^;]+)/);
-          textColorMatch = styleContent.match(/color:\s*([^;]+)/);
-        }
-
-        // If only text color (no background), treat as textColor mark
-        if (textColorMatch && !bgColorMatch) {
-          return {
-            type: 'textColor',
-            attrs: { color: textColorMatch[1].trim() }
-          };
-        }
-
-        // Has background color, treat as highlight
-        const highlightAttrs: { color: string; textColor?: string; class?: string } = {
-          color: bgColorMatch ? bgColorMatch[1].trim() : 'var(--tt-color-highlight-yellow)'
-        };
-
-        if (textColorMatch) {
-          highlightAttrs.textColor = textColorMatch[1].trim();
-        }
-
-        if (classMatch) {
-          highlightAttrs.class = classMatch[1];
-        }
-
-        return { type: 'highlight', attrs: highlightAttrs };
-      case 'a':
-        const hrefMatch = attrs.match(/href=["']([^"']+)["']/);
-        if (hrefMatch) {
-          return {
-            type: 'link',
-            attrs: { href: hrefMatch[1], target: '_blank', rel: 'noopener noreferrer nofollow', class: null }
-          };
-        }
-        return null;
-      case 'sup':
-        return { type: 'superscript' };
-      case 'sub':
-        return { type: 'subscript' };
-      case 'span':
-        const spanStyleMatch = attrs.match(/style=["']([^"']+)["']/);
-        if (spanStyleMatch) {
-          const spanColor = spanStyleMatch[1].match(/color:\s*([^;]+)/)?.[1];
-          if (spanColor) {
-            return {
-              type: 'textColor',
-              attrs: { color: spanColor.trim() }
-            };
-          }
-        }
-        return null;
-      default:
-        return null;
-    }
-  };
-
-  while ((match = tagPattern.exec(html)) !== null) {
-    // Add text before tag
-    if (match.index > lastIndex) {
-      const text = html.substring(lastIndex, match.index);
-      if (text) {
-        const node: TipTapTextNode = { type: 'text', text };
-        if (markStack.length > 0) {
-          node.marks = [...markStack];
-        }
-        nodes.push(node);
-      }
-    }
-
-    const isClosing = match[1] === '/';
-    const tagName = match[2];
-    const attrs = match[3];
-
-    if (!isClosing) {
-      const mark = tagToMark(tagName, attrs);
-      if (mark) {
-        markStack.push(mark);
-      }
-    } else {
-      // Find and remove the corresponding opening mark
-      const mark = tagToMark(tagName, '');
-      if (mark) {
-        const index = markStack.findIndex(m => m.type === mark.type);
-        if (index !== -1) {
-          markStack.splice(index, 1);
-        }
-      }
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add remaining text
-  if (lastIndex < html.length) {
-    const text = html.substring(lastIndex);
-    if (text) {
-      const node: TipTapTextNode = { type: 'text', text };
-      if (markStack.length > 0) {
-        node.marks = [...markStack];
-      }
-      nodes.push(node);
-    }
-  }
-
-  return nodes;
-}
-
-function areMarksEqual(marks1: TipTapMark[], marks2: TipTapMark[]): boolean {
-  if (marks1.length !== marks2.length) return false;
-
-  const sorted1 = [...marks1].sort((a, b) => a.type.localeCompare(b.type));
-  const sorted2 = [...marks2].sort((a, b) => a.type.localeCompare(b.type));
-
-  return sorted1.every((mark, i) => {
-    const otherMark = sorted2[i];
-    return mark.type === otherMark.type &&
-           JSON.stringify(mark.attrs || {}) === JSON.stringify(otherMark.attrs || {});
-  });
-}
-
-/**
- * Converts TipTap text nodes with marks back to HTML string for EditorJS
- *
- * @example
- * convertTipTapNodesToHTML([
- *   { type: 'text', text: 'Hello ' },
- *   { type: 'text', text: 'world', marks: [{ type: 'bold' }] }
- * ])
- * // Returns: 'Hello <b>world</b>'
+ * TipTap text nodes -> EditorJS HTML
+ * Supports marks: bold, italic, underline, strike, code, highlight, link, superscript, subscript, textStyle(color)
  */
 export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
   if (!nodes || nodes.length === 0) return '';
 
-  return nodes.map(node => {
-    let text = node.text || '';
-    const marks = node.marks || [];
+  const escapeHTML = (s: string): string => {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
 
-    // Apply marks in reverse order (innermost first)
-    // Sort marks to ensure consistent nesting order
-    const sortedMarks = [...marks].sort((a, b) => {
-      const order = ['link', 'highlight', 'textColor', 'code', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript'];
-      return order.indexOf(a.type) - order.indexOf(b.type);
-    });
+  const order = [
+    'link',
+    'highlight',
+    'textStyle',
+    'code',
+    'bold',
+    'italic',
+    'underline',
+    'strike',
+    'superscript',
+    'subscript',
+  ];
 
-    sortedMarks.forEach(mark => {
-      switch (mark.type) {
-        case 'bold':
+  return nodes
+    .map((node) => {
+      let text = escapeHTML(node.text || '');
+      const marks = normalizeMarks(node.marks || []);
+
+      const sortedMarks = [...marks].sort((a, b) => {
+        const ai = order.indexOf(a.type);
+        const bi = order.indexOf(b.type);
+        const aRank = ai === -1 ? 999 : ai;
+        const bRank = bi === -1 ? 999 : bi;
+        return aRank - bRank;
+      });
+
+      for (const mark of sortedMarks) {
+        if (mark.type === 'bold') {
           text = `<b>${text}</b>`;
-          break;
-        case 'italic':
+          continue;
+        }
+        if (mark.type === 'italic') {
           text = `<i>${text}</i>`;
-          break;
-        case 'underline':
+          continue;
+        }
+        if (mark.type === 'underline') {
           text = `<u>${text}</u>`;
-          break;
-        case 'strike':
+          continue;
+        }
+        if (mark.type === 'strike') {
           text = `<s>${text}</s>`;
-          break;
-        case 'code':
+          continue;
+        }
+        if (mark.type === 'code') {
           text = `<code>${text}</code>`;
-          break;
-        case 'highlight':
-          const bgColor = mark.attrs?.color || 'var(--tt-color-highlight-yellow)';
-          const textColor = mark.attrs?.textColor;
-          const className = mark.attrs?.class;
-
-          const styleAttr = textColor
-            ? `background-color: ${bgColor}; color: ${textColor}`
-            : `background-color: ${bgColor}`;
-
-          const classAttr = className ? ` class="${className}"` : '';
-
-          text = `<mark style="${styleAttr}"${classAttr}>${text}</mark>`;
-          break;
-        case 'link':
-          const href = mark.attrs?.href || '#';
-          const target = mark.attrs?.target || '_blank';
-          text = `<a href="${href}" target="${target}">${text}</a>`;
-          break;
-        case 'superscript':
+          continue;
+        }
+        if (mark.type === 'superscript') {
           text = `<sup>${text}</sup>`;
-          break;
-        case 'subscript':
+          continue;
+        }
+        if (mark.type === 'subscript') {
           text = `<sub>${text}</sub>`;
-          break;
-        case 'textColor':
-          const color = mark.attrs?.color || '#000000';
-          text = `<span style="color: ${color}">${text}</span>`;
-          break;
-      }
-    });
+          continue;
+        }
 
-    return text;
-  }).join('');
+        if (mark.type === 'link') {
+          const href = typeof mark.attrs?.href === 'string' ? mark.attrs.href : '#';
+          const target = typeof mark.attrs?.target === 'string' ? mark.attrs.target : '_blank';
+          const rel = typeof mark.attrs?.rel === 'string' ? mark.attrs.rel : 'noopener noreferrer nofollow';
+
+          text = `<a href="${escapeAttr(href)}" target="${escapeAttr(target)}" rel="${escapeAttr(rel)}">${text}</a>`;
+          continue;
+        }
+
+        if (mark.type === 'highlight') {
+          const bg = typeof mark.attrs?.color === 'string' ? mark.attrs.color : 'var(--tt-color-highlight-yellow)';
+          const tc = typeof mark.attrs?.textColor === 'string' ? mark.attrs.textColor : '';
+          const className = typeof mark.attrs?.class === 'string' ? mark.attrs.class : '';
+
+          const styleAttr = tc.trim() !== ''
+            ? `background-color: ${bg}; color: ${tc}`
+            : `background-color: ${bg}`;
+
+          const classAttr = className.trim() !== '' ? ` class="${escapeAttr(className)}"` : '';
+
+          text = `<mark style="${escapeAttr(styleAttr)}"${classAttr}>${text}</mark>`;
+          continue;
+        }
+
+        // TipTap standard color mark
+        if (mark.type === 'textStyle') {
+          const color = typeof mark.attrs?.color === 'string' ? mark.attrs.color.trim() : '';
+          if (color !== '') {
+            text = `<span style="color: ${escapeAttr(color)}">${text}</span>`;
+          }
+          continue;
+        }
+      }
+
+      return text;
+    })
+    .join('');
+
+  function escapeAttr(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+}
+
+/**
+ * Marks utilities
+ */
+function normalizeMarks(marks: TipTapMark[]): TipTapMark[] {
+  if (!marks || marks.length === 0) return [];
+
+  const out: TipTapMark[] = [];
+  const seen = new Set<string>();
+
+  for (const mark of marks) {
+    const attrs = mark.attrs && typeof mark.attrs === 'object' ? mark.attrs : undefined;
+    const normalized: TipTapMark = attrs ? { type: mark.type, attrs } : { type: mark.type };
+    const key = `${normalized.type}::${stableStringify(normalized.attrs)}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(normalized);
+    }
+  }
+
+  // sort for deterministic comparisons/merges
+  out.sort((a, b) => {
+    const t = a.type.localeCompare(b.type);
+    if (t !== 0) return t;
+    return stableStringify(a.attrs).localeCompare(stableStringify(b.attrs));
+  });
+
+  return out;
+}
+
+function areMarksEqual(marks1: TipTapMark[], marks2: TipTapMark[]): boolean {
+  const a = normalizeMarks(marks1);
+  const b = normalizeMarks(marks2);
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].type !== b[i].type) return false;
+    if (stableStringify(a[i].attrs) !== stableStringify(b[i].attrs)) return false;
+  }
+
+  return true;
+}
+
+function stableStringify(value: any): string {
+  if (value == null) return '{}';
+  if (typeof value !== 'object') return JSON.stringify(value);
+
+  const keys = Object.keys(value).sort();
+  const obj: Record<string, any> = {};
+  for (const k of keys) obj[k] = value[k];
+  return JSON.stringify(obj);
 }
