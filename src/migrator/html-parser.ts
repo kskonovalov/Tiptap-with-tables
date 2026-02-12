@@ -62,27 +62,35 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
           case 'mark':
             const style = current.getAttribute('style') || '';
             const bgColor = current.getAttribute('data-color') ||
-                           style.match(/background-color:\s*([^;]+)/)?.[1] ||
-                           'var(--tt-color-highlight-yellow)';
+                           style.match(/background-color:\s*([^;]+)/)?.[1];
             const textColor = style.match(/color:\s*([^;]+)/)?.[1];
             const className = current.getAttribute('class');
 
-            const highlightAttrs: { color: string; textColor?: string; class?: string | null } = {
-              color: bgColor.trim()
-            };
+            // If only text color (no background), treat as textColor mark
+            if (textColor && !bgColor) {
+              marks.push({
+                type: 'textColor',
+                attrs: { color: textColor.trim() }
+              });
+            } else {
+              // Has background color, treat as highlight
+              const highlightAttrs: { color: string; textColor?: string; class?: string | null } = {
+                color: (bgColor || 'var(--tt-color-highlight-yellow)').trim()
+              };
 
-            if (textColor) {
-              highlightAttrs.textColor = textColor.trim();
+              if (textColor) {
+                highlightAttrs.textColor = textColor.trim();
+              }
+
+              if (className) {
+                highlightAttrs.class = className;
+              }
+
+              marks.push({
+                type: 'highlight',
+                attrs: highlightAttrs
+              });
             }
-
-            if (className) {
-              highlightAttrs.class = className;
-            }
-
-            marks.push({
-              type: 'highlight',
-              attrs: highlightAttrs
-            });
             break;
           case 'a':
             const href = current.getAttribute('href');
@@ -193,21 +201,31 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
       case 'mark':
         const styleMatch = attrs.match(/style=["']([^"']+)["']/);
         const classMatch = attrs.match(/class=["']([^"']+)["']/);
-        const highlightAttrs: { color: string; textColor?: string; class?: string } = {
-          color: 'var(--tt-color-highlight-yellow)'
-        };
+
+        let bgColorMatch = null;
+        let textColorMatch = null;
 
         if (styleMatch) {
           const styleContent = styleMatch[1];
-          const bgColorMatch = styleContent.match(/background-color:\s*([^;]+)/);
-          const textColorMatch = styleContent.match(/color:\s*([^;]+)/);
+          bgColorMatch = styleContent.match(/background-color:\s*([^;]+)/);
+          textColorMatch = styleContent.match(/color:\s*([^;]+)/);
+        }
 
-          if (bgColorMatch) {
-            highlightAttrs.color = bgColorMatch[1].trim();
-          }
-          if (textColorMatch) {
-            highlightAttrs.textColor = textColorMatch[1].trim();
-          }
+        // If only text color (no background), treat as textColor mark
+        if (textColorMatch && !bgColorMatch) {
+          return {
+            type: 'textColor',
+            attrs: { color: textColorMatch[1].trim() }
+          };
+        }
+
+        // Has background color, treat as highlight
+        const highlightAttrs: { color: string; textColor?: string; class?: string } = {
+          color: bgColorMatch ? bgColorMatch[1].trim() : 'var(--tt-color-highlight-yellow)'
+        };
+
+        if (textColorMatch) {
+          highlightAttrs.textColor = textColorMatch[1].trim();
         }
 
         if (classMatch) {
