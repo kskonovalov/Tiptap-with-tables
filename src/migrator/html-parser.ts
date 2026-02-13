@@ -1,4 +1,4 @@
-import type { TipTapMark, TipTapTextNode } from './types';
+import type { TipTapMark, TipTapNode, TipTapTextNode } from './types';
 
 /**
  * EditorJS HTML -> TipTap text nodes
@@ -9,14 +9,14 @@ import type { TipTapMark, TipTapTextNode } from './types';
  *   - @tiptap/extension-text-style
  *   - @tiptap/extension-color
  */
-export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
+export function parseHTMLToTipTapNodes(html: string): (TipTapNode | TipTapTextNode)[] {
   if (html === '' || html == null) return [];
 
   if (!/<[^>]+>/.test(html)) {
     return [{ type: 'text', text: html }];
   }
 
-  const nodes: TipTapTextNode[] = [];
+  const nodes: (TipTapNode | TipTapTextNode)[] = [];
 
   const pushText = (text: string, marks: TipTapMark[]) => {
     if (text === '') return;
@@ -24,8 +24,8 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
     const normalizedMarks = normalizeMarks(marks);
     const prev = nodes[nodes.length - 1];
 
-    if (prev && prev.type === 'text' && areMarksEqual(prev.marks || [], normalizedMarks)) {
-      prev.text += text;
+    if (prev && prev.type === 'text' && areMarksEqual((prev as TipTapTextNode).marks || [], normalizedMarks)) {
+      (prev as TipTapTextNode).text += text;
       return;
     }
 
@@ -117,7 +117,7 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
       const el = node as Element;
 
       if (el.tagName.toLowerCase() === 'br') {
-        pushText('<br>', inheritedMarks);
+        nodes.push({ type: 'hardBreak' });
         return;
       }
 
@@ -146,8 +146,8 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
  * Node.js fallback HTML -> TipTap text nodes (basic)
  * Supports nested tags via a stack
  */
-function parseHTMLSimple(html: string): TipTapTextNode[] {
-  const nodes: TipTapTextNode[] = [];
+function parseHTMLSimple(html: string): (TipTapNode | TipTapTextNode)[] {
+  const nodes: (TipTapNode | TipTapTextNode)[] = [];
   const tagPattern = /<(\/?)([a-zA-Z][\w:-]*)([^>]*)>/g;
 
   let lastIndex = 0;
@@ -160,8 +160,8 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
     const normalized = normalizeMarks(markStack);
 
     const prev = nodes[nodes.length - 1];
-    if (prev && prev.type === 'text' && areMarksEqual(prev.marks || [], normalized)) {
-      prev.text += text;
+    if (prev && prev.type === 'text' && areMarksEqual((prev as TipTapTextNode).marks || [], normalized)) {
+      (prev as TipTapTextNode).text += text;
       return;
     }
 
@@ -270,7 +270,7 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
     const attrs = match[3] || '';
 
     if (tagName.toLowerCase() === 'br') {
-      pushText(match[0]);
+      nodes.push({ type: 'hardBreak' });
       lastIndex = match.index + match[0].length;
       continue;
     }
@@ -297,7 +297,7 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
  * TipTap text nodes -> EditorJS HTML
  * Supports marks: bold, italic, underline, strike, code, highlight, link, superscript, subscript, textStyle(color)
  */
-export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
+export function convertTipTapNodesToHTML(nodes: (TipTapNode | TipTapTextNode)[]): string {
   if (!nodes || nodes.length === 0) return '';
 
   const escapeHTML = (s: string): string => {
@@ -324,12 +324,11 @@ export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
 
   return nodes
     .map((node) => {
-      const raw = node.text || '';
-      // Escape HTML but preserve <br> / <br/> / <br /> tags
-      let text = raw.split(/(<br\s*\/?>)/gi)
-        .map((part, i) => i % 2 === 0 ? escapeHTML(part) : '<br>')
-        .join('');
-      const marks = normalizeMarks(node.marks || []);
+      if (node.type === 'hardBreak') return '<br>';
+
+      const raw = (node as TipTapTextNode).text || '';
+      let text = escapeHTML(raw);
+      const marks = normalizeMarks((node as TipTapTextNode).marks || []);
 
       const sortedMarks = [...marks].sort((a, b) => {
         const ai = order.indexOf(a.type);
