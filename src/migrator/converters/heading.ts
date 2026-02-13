@@ -34,8 +34,12 @@ export function editorjsHeaderToTiptap(block: EditorJSBlock): TipTapHeadingNode 
 
   const level = (data.level >= 1 && data.level <= 6 ? data.level : 2) as 1 | 2 | 3 | 4 | 5 | 6;
 
+  // EditorJS stores alignment in tunes.alignmentTune.alignment
   let textAlign: 'left' | 'center' | 'right' | 'justify' | null = null;
-  if (data.alignment) {
+  const tuneAlignment = block.tunes?.alignmentTune?.alignment;
+  if (tuneAlignment) {
+    textAlign = tuneAlignment;
+  } else if (data.alignment) {
     textAlign = data.alignment;
   }
 
@@ -90,12 +94,19 @@ export function tiptapHeadingToEditorjs(node: TipTapHeadingNode): EditorJSBlock 
     level: level as 1 | 2 | 3 | 4 | 5 | 6,
   };
 
-  if (alignment) {
-    data.alignment = alignment;
-  }
-
-  return {
+  const block: EditorJSBlock = {
     type: 'header',
     data,
   };
+
+  // Write alignment to tunes.alignmentTune.alignment
+  if (alignment) {
+    block.tunes = {
+      alignmentTune: {
+        alignment
+      }
+    };
+  }
+
+  return block;
 }

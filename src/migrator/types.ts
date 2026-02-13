@@ -3,6 +3,12 @@ export interface EditorJSBlock {
   id?: string;
   type: string;
   data: Record<string, any>;
+  tunes?: {
+    alignmentTune?: {
+      alignment?: 'left' | 'center' | 'right' | 'justify';
+    };
+    [key: string]: any;
+  };
 }
 
 export interface EditorJSData {

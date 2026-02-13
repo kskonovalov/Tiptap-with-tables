@@ -34,9 +34,12 @@ export function editorjsParagraphToTiptap(block: EditorJSBlock): TipTapParagraph
   // Parse HTML text into TipTap text nodes with marks
   const content = parseHTMLToTipTapNodes(data.text || '');
 
-  // Map alignment values
+  // Map alignment values — EditorJS stores alignment in tunes.alignmentTune.alignment
   let textAlign: 'left' | 'center' | 'right' | 'justify' | null = null;
-  if (data.alignment) {
+  const tuneAlignment = block.tunes?.alignmentTune?.alignment;
+  if (tuneAlignment) {
+    textAlign = tuneAlignment;
+  } else if (data.alignment) {
     textAlign = data.alignment;
   }
 
@@ -94,13 +97,19 @@ export function tiptapParagraphToEditorjs(
     text
   };
 
-  // Only add alignment if it's not the default (left or null)
-  if (alignment) {
-    data.alignment = alignment;
-  }
-
-  return {
+  const block: EditorJSBlock = {
     type: blockType,
     data
   };
+
+  // Write alignment to tunes.alignmentTune.alignment
+  if (alignment) {
+    block.tunes = {
+      alignmentTune: {
+        alignment
+      }
+    };
+  }
+
+  return block;
 }

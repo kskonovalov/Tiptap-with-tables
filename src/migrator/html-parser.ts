@@ -1,4 +1,4 @@
-import { TipTapMark, TipTapTextNode } from './types';
+import type { TipTapMark, TipTapTextNode } from './types';
 
 /**
  * EditorJS HTML -> TipTap text nodes
@@ -115,6 +115,12 @@ export function parseHTMLToTipTapNodes(html: string): TipTapTextNode[] {
       if (node.nodeType !== Node.ELEMENT_NODE) return;
 
       const el = node as Element;
+
+      if (el.tagName.toLowerCase() === 'br') {
+        pushText('<br>', inheritedMarks);
+        return;
+      }
+
       const ownMarks = marksFromElement(el);
       const combined = normalizeMarks([...inheritedMarks, ...ownMarks]);
 
@@ -263,6 +269,12 @@ function parseHTMLSimple(html: string): TipTapTextNode[] {
     const tagName = match[2];
     const attrs = match[3] || '';
 
+    if (tagName.toLowerCase() === 'br') {
+      pushText(match[0]);
+      lastIndex = match.index + match[0].length;
+      continue;
+    }
+
     if (!isClosing) {
       const mark = tagToMark(tagName, attrs);
       if (mark) markStack.push(mark);
@@ -312,7 +324,11 @@ export function convertTipTapNodesToHTML(nodes: TipTapTextNode[]): string {
 
   return nodes
     .map((node) => {
-      let text = escapeHTML(node.text || '');
+      const raw = node.text || '';
+      // Escape HTML but preserve <br> / <br/> / <br /> tags
+      let text = raw.split(/(<br\s*\/?>)/gi)
+        .map((part, i) => i % 2 === 0 ? escapeHTML(part) : '<br>')
+        .join('');
       const marks = normalizeMarks(node.marks || []);
 
       const sortedMarks = [...marks].sort((a, b) => {
