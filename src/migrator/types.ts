@@ -49,3 +49,64 @@ export interface TipTapParagraphNode extends TipTapNode {
   };
   content?: TipTapTextNode[];
 }
+
+export interface EditorJSHeaderData {
+  text: string;
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  alignment?: 'left' | 'center' | 'right' | 'justify';
+  [key: string]: any;
+}
+
+export interface TipTapHeadingNode extends TipTapNode {
+  type: 'heading';
+  attrs?: {
+    level: 1 | 2 | 3 | 4 | 5 | 6;
+    textAlign?: 'left' | 'center' | 'right' | 'justify' | null;
+  };
+  content?: TipTapTextNode[];
+}
+
+// EditorJS List Types (@editorjs/list)
+
+/** Nested item format (List 2.0+) */
+export interface EditorJSListItem {
+  content: string;
+  meta: Record<string, any>;
+  items: EditorJSListItem[];
+}
+
+export interface EditorJSListData {
+  style: 'ordered' | 'unordered' | 'checklist';
+  meta?: Record<string, any>;
+  items: EditorJSListItem[] | string[];
+  [key: string]: any;
+}
+
+// TipTap List Types
+
+export interface TipTapListItemNode extends TipTapNode {
+  type: 'listItem';
+  content?: (TipTapParagraphNode | TipTapNode)[];
+}
+
+export interface TipTapTaskItemNode extends TipTapNode {
+  type: 'taskItem';
+  attrs?: { checked: boolean };
+  content?: (TipTapParagraphNode | TipTapNode)[];
+}
+
+export interface TipTapBulletListNode extends TipTapNode {
+  type: 'bulletList';
+  content?: TipTapListItemNode[];
+}
+
+export interface TipTapOrderedListNode extends TipTapNode {
+  type: 'orderedList';
+  attrs?: { start?: number };
+  content?: TipTapListItemNode[];
+}
+
+export interface TipTapTaskListNode extends TipTapNode {
+  type: 'taskList';
+  content?: TipTapTaskItemNode[];
+}

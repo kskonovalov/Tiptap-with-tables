@@ -8,6 +8,14 @@ import {
   editorjsParagraphToTiptap,
   tiptapParagraphToEditorjs,
 } from "./converters/paragraph";
+import {
+  editorjsHeaderToTiptap,
+  tiptapHeadingToEditorjs,
+} from "./converters/heading";
+import {
+  editorjsListToTiptap,
+  tiptapListToEditorjs,
+} from "./converters/list";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -42,6 +50,10 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
     // Handle paragraph and customParagraph blocks
     if (block.type === "paragraph" || block.type === "customParagraph") {
       content.push(editorjsParagraphToTiptap(block));
+    } else if (block.type === "header") {
+      content.push(editorjsHeaderToTiptap(block));
+    } else if (block.type === "list") {
+      content.push(editorjsListToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -97,6 +109,14 @@ export function tiptapToEditorjs(
     // Handle paragraph nodes
     if (node.type === "paragraph") {
       blocks.push(tiptapParagraphToEditorjs(node, paragraphBlockType));
+    } else if (node.type === "heading") {
+      blocks.push(tiptapHeadingToEditorjs(node as any));
+    } else if (
+      node.type === "bulletList" ||
+      node.type === "orderedList" ||
+      node.type === "taskList"
+    ) {
+      blocks.push(tiptapListToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
@@ -120,3 +140,11 @@ export {
   editorjsParagraphToTiptap,
   tiptapParagraphToEditorjs,
 } from "./converters/paragraph";
+export {
+  editorjsHeaderToTiptap,
+  tiptapHeadingToEditorjs,
+} from "./converters/heading";
+export {
+  editorjsListToTiptap,
+  tiptapListToEditorjs,
+} from "./converters/list";
