@@ -60,13 +60,11 @@ export function tiptapListToEditorjs(node: TipTapNode): EditorJSBlock {
       ? (node.content || []).map(taskItemToEditorjs)
       : (node.content || []).map((li) => listItemToEditorjs(li, style));
 
-  const meta: Record<string, any> = { style };
+  const data: EditorJSListData = { style, items };
 
   if (node.type === 'orderedList' && node.attrs?.start && node.attrs.start !== 1) {
-    meta.start = node.attrs.start;
+    data.meta = { start: node.attrs.start };
   }
-
-  const data: EditorJSListData = { items, meta };
 
   return { id: generateBlockId(), type: 'list', data };
 }
