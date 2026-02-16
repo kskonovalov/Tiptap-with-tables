@@ -1,9 +1,10 @@
-import {
+import type {
   EditorJSBlock,
   EditorJSParagraphData,
   TipTapParagraphNode
 } from '../types';
 import { parseHTMLToTipTapNodes, convertTipTapNodesToHTML } from '../html-parser';
+import { generateBlockId } from '../utils';
 
 /**
  * Converts EditorJS paragraph block to TipTap paragraph node
@@ -98,6 +99,7 @@ export function tiptapParagraphToEditorjs(
   };
 
   const block: EditorJSBlock = {
+    id: generateBlockId(),
     type: blockType,
     data
   };

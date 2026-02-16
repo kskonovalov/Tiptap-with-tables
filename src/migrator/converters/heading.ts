@@ -1,9 +1,10 @@
-import {
+import type {
   EditorJSBlock,
   EditorJSHeaderData,
   TipTapHeadingNode
 } from '../types';
 import { parseHTMLToTipTapNodes, convertTipTapNodesToHTML } from '../html-parser';
+import { generateBlockId } from '../utils';
 
 /**
  * Converts EditorJS header block to TipTap heading node
@@ -95,6 +96,7 @@ export function tiptapHeadingToEditorjs(node: TipTapHeadingNode): EditorJSBlock 
   };
 
   const block: EditorJSBlock = {
+    id: generateBlockId(),
     type: 'header',
     data,
   };

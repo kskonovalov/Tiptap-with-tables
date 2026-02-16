@@ -1,4 +1,4 @@
-import {
+import type {
   EditorJSBlock,
   EditorJSListData,
   EditorJSListItem,
@@ -12,6 +12,7 @@ import {
   TipTapTaskListNode,
 } from '../types';
 import { parseHTMLToTipTapNodes, convertTipTapNodesToHTML } from '../html-parser';
+import { generateBlockId } from '../utils';
 
 // ---------------------------------------------------------------------------
 // EditorJS -> TipTap
@@ -27,7 +28,7 @@ import { parseHTMLToTipTapNodes, convertTipTapNodesToHTML } from '../html-parser
  */
 export function editorjsListToTiptap(block: EditorJSBlock): TipTapNode {
   const data = block.data as EditorJSListData;
-  const style = data.style || 'unordered';
+  const style = data.meta?.style || data.style || 'unordered';
   const items = normalizeItems(data.items);
 
   if (style === 'checklist') {
@@ -59,13 +60,15 @@ export function tiptapListToEditorjs(node: TipTapNode): EditorJSBlock {
       ? (node.content || []).map(taskItemToEditorjs)
       : (node.content || []).map((li) => listItemToEditorjs(li, style));
 
-  const data: EditorJSListData = { style, items };
+  const meta: Record<string, any> = { style };
 
   if (node.type === 'orderedList' && node.attrs?.start && node.attrs.start !== 1) {
-    data.meta = { start: node.attrs.start };
+    meta.start = node.attrs.start;
   }
 
-  return { type: 'list', data };
+  const data: EditorJSListData = { items, meta };
+
+  return { id: generateBlockId(), type: 'list', data };
 }
 
 // ---------------------------------------------------------------------------
@@ -141,13 +144,13 @@ function buildTaskItem(item: EditorJSListItem): TipTapTaskItemNode {
 }
 
 function textToParagraph(html: string): TipTapParagraphNode {
-  const textNodes = parseHTMLToTipTapNodes(html || '');
+  const contentNodes = parseHTMLToTipTapNodes(html || '');
   const node: TipTapParagraphNode = {
     type: 'paragraph',
     attrs: { textAlign: null },
   };
-  if (textNodes.length > 0) {
-    node.content = textNodes;
+  if (contentNodes.length > 0) {
+    (node as TipTapNode).content = contentNodes;
   }
   return node;
 }

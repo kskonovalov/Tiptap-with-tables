@@ -82,8 +82,13 @@ export interface EditorJSListItem {
 }
 
 export interface EditorJSListData {
-  style: 'ordered' | 'unordered' | 'checklist';
-  meta?: Record<string, any>;
+  /** @deprecated Use meta.style instead. Kept for backwards compat reading. */
+  style?: 'ordered' | 'unordered' | 'checklist';
+  meta?: {
+    style?: 'ordered' | 'unordered' | 'checklist';
+    start?: number;
+    [key: string]: any;
+  };
   items: EditorJSListItem[] | string[];
   [key: string]: any;
 }

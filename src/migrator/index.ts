@@ -1,4 +1,4 @@
-import {
+import type {
   EditorJSData,
   EditorJSBlock,
   TipTapDocument,
@@ -148,3 +148,4 @@ export {
   editorjsListToTiptap,
   tiptapListToEditorjs,
 } from "./converters/list";
+export { generateBlockId } from "./utils";
