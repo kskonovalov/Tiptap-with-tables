@@ -31,7 +31,7 @@ import {
 } from "../../tiptap-ui-primitive/toolbar/index";
 
 // --- Tiptap Node ---
-import { ImageUploadNode } from "../../tiptap-node/image-upload-node/image-upload-node-extension";
+import { ImageUploadNode, pendingUploadFiles } from "../../tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import { AlertNode } from "../../tiptap-node/alert-node/index";
 import {
@@ -314,9 +314,7 @@ export function SimpleEditor() {
           "aria-label": "Main content area, start typing to enter text.",
           class: "simple-editor",
         },
-        handlePaste(_view, event) {
-          if (!editor) return false;
-
+        handlePaste(view, event) {
           const items = event.clipboardData?.items;
           if (!items) return false;
 
@@ -330,19 +328,14 @@ export function SimpleEditor() {
           event.preventDefault();
 
           const id = crypto.randomUUID();
-          const storage = editor.extensionManager.extensions.find(
-            (ext) => ext.name === "imageUpload",
-          )?.storage;
+          const nodeType = view.state.schema.nodes.imageUpload;
 
-          if (storage) {
-            storage.pendingFiles.set(id, files);
+          if (nodeType) {
+            pendingUploadFiles.set(id, files);
+            const node = nodeType.create({ id });
+            const tr = view.state.tr.replaceSelectionWith(node);
+            view.dispatch(tr);
           }
-
-          editor
-            .chain()
-            .focus()
-            .insertContent({ type: "imageUpload", attrs: { id } })
-            .run();
 
           return true;
         },

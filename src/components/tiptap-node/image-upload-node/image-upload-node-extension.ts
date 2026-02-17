@@ -3,6 +3,8 @@ import { ReactNodeViewRenderer } from "@tiptap/react"
 import { ImageUploadNode as ImageUploadNodeComponent } from "./image-upload-node"
 import type { NodeType } from "@tiptap/pm/model"
 
+export const pendingUploadFiles = new Map<string, File[]>()
+
 export type UploadFunction = (
   file: File,
   onProgress?: (event: { progress: number }) => void,
@@ -84,12 +86,6 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
       onError: undefined,
       onSuccess: undefined,
       HTMLAttributes: {},
-    }
-  },
-
-  addStorage() {
-    return {
-      pendingFiles: new Map<string, File[]>(),
     }
   },
 

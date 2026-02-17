@@ -7,6 +7,7 @@ import { Button } from "../../tiptap-ui-primitive/button/index"
 import { CloseIcon } from "../../tiptap-icons/close-icon"
 import "./image-upload-node.scss"
 import { focusNextNode, isValidPosition } from "../../../lib/tiptap-utils"
+import { pendingUploadFiles } from "./image-upload-node-extension"
 
 export interface FileItem {
   /**
@@ -483,14 +484,13 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
     }
   }
 
-  // Auto-start upload if files were passed via paste (pending in storage)
+  // Auto-start upload if files were passed via paste
   const nodeId = props.node.attrs.id as string | null
   useEffect(() => {
     if (!nodeId) return
-    const pendingFiles = extension.storage.pendingFiles as Map<string, File[]>
-    const files = pendingFiles.get(nodeId)
+    const files = pendingUploadFiles.get(nodeId)
     if (files) {
-      pendingFiles.delete(nodeId)
+      pendingUploadFiles.delete(nodeId)
       handleUpload(files)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
