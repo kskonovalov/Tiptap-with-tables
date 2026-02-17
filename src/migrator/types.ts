@@ -121,3 +121,41 @@ export interface TipTapTaskListNode extends TipTapNode {
   type: 'taskList';
   content?: TipTapTaskItemNode[];
 }
+
+// EditorJS Table Types
+export interface EditorJSTableData {
+  cols: number;
+  rows: number;
+  content: string[][];
+  withHeadings: boolean;
+  decoded?: boolean;
+  filters?: Record<string, string[]>;
+}
+
+// TipTap Table Types
+export interface TipTapTableCellNode extends TipTapNode {
+  type: 'tableCell';
+  attrs?: Record<string, any>;
+  content?: TipTapNode[];
+}
+
+export interface TipTapTableHeaderNode extends TipTapNode {
+  type: 'tableHeader';
+  attrs?: Record<string, any>;
+  content?: TipTapNode[];
+}
+
+export interface TipTapTableRowNode extends TipTapNode {
+  type: 'tableRow';
+  attrs?: { hidden?: boolean };
+  content?: (TipTapTableCellNode | TipTapTableHeaderNode)[];
+}
+
+export interface TipTapTableNode extends TipTapNode {
+  type: 'table';
+  attrs?: {
+    filters?: Record<string, string[]>;
+    fullWidth?: boolean;
+  };
+  content?: TipTapTableRowNode[];
+}

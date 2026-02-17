@@ -24,6 +24,10 @@ import {
   editorjsImageToTiptap,
   tiptapImageToEditorjs,
 } from "./converters/image";
+import {
+  editorjsTableToTiptap,
+  tiptapTableToEditorjs,
+} from "./converters/table";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -66,6 +70,8 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsDelimiterToTiptap(block));
     } else if (block.type.toLowerCase() === "image") {
       content.push(editorjsImageToTiptap(block));
+    } else if (block.type.toLowerCase() === "table") {
+      content.push(editorjsTableToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -133,6 +139,8 @@ export function tiptapToEditorjs(
       blocks.push(tiptapHorizontalRuleToEditorjs(node));
     } else if (node.type === "image") {
       blocks.push(tiptapImageToEditorjs(node));
+    } else if (node.type === "table") {
+      blocks.push(tiptapTableToEditorjs(node as any));
     }
     // Add more node type handlers here as needed
     else {
@@ -172,4 +180,8 @@ export {
   editorjsImageToTiptap,
   tiptapImageToEditorjs,
 } from "./converters/image";
+export {
+  editorjsTableToTiptap,
+  tiptapTableToEditorjs,
+} from "./converters/table";
 export { generateBlockId } from "./utils";

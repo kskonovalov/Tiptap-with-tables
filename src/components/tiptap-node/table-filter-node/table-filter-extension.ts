@@ -34,6 +34,11 @@ export const TableFilter = TiptapTable.extend({
           }
         },
       },
+      fullWidth: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-full-width") === "true",
+        renderHTML: (attributes) => attributes.fullWidth ? { "data-full-width": "true" } : {},
+      },
     }
   },
 
