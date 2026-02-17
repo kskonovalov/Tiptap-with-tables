@@ -87,8 +87,17 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
     }
   },
 
+  addStorage() {
+    return {
+      pendingFiles: new Map<string, File[]>(),
+    }
+  },
+
   addAttributes() {
     return {
+      id: {
+        default: null,
+      },
       accept: {
         default: this.options.accept,
       },

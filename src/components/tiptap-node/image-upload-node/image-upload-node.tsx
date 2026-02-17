@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { NodeViewProps } from "@tiptap/react"
 import { NodeViewWrapper } from "@tiptap/react"
 import { Button } from "../../tiptap-ui-primitive/button/index"
@@ -482,6 +482,19 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
       }
     }
   }
+
+  // Auto-start upload if files were passed via paste (pending in storage)
+  const nodeId = props.node.attrs.id as string | null
+  useEffect(() => {
+    if (!nodeId) return
+    const pendingFiles = extension.storage.pendingFiles as Map<string, File[]>
+    const files = pendingFiles.get(nodeId)
+    if (files) {
+      pendingFiles.delete(nodeId)
+      handleUpload(files)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files

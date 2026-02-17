@@ -96,7 +96,7 @@ import { useResponsiveToolbar } from "../../../hooks/use-responsive-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
 // --- Lib ---
-import { handleFileUpload, handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils";
+import { handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils";
 
 // --- Styles ---
 import "./simple-editor.scss";
@@ -314,33 +314,35 @@ export function SimpleEditor() {
           "aria-label": "Main content area, start typing to enter text.",
           class: "simple-editor",
         },
-        handlePaste(view, event) {
+        handlePaste(_view, event) {
+          if (!editor) return false;
+
           const items = event.clipboardData?.items;
           if (!items) return false;
 
-          const imageItems = Array.from(items).filter((item) =>
-            item.type.startsWith("image/"),
-          );
-          if (imageItems.length === 0) return false;
+          const files = Array.from(items)
+            .filter((item) => item.type.startsWith("image/"))
+            .map((item) => item.getAsFile())
+            .filter((f): f is File => f !== null);
+
+          if (files.length === 0) return false;
 
           event.preventDefault();
 
-          imageItems.forEach((item) => {
-            const file = item.getAsFile();
-            if (!file) return;
+          const id = crypto.randomUUID();
+          const storage = editor.extensionManager.extensions.find(
+            (ext) => ext.name === "imageUpload",
+          )?.storage;
 
-            handleFileUpload(file)
-              .then((result) => {
-                if (!result.success || !result.file) return;
-                const { schema } = view.state;
-                const imageNode = schema.nodes.image.create({ src: result.file.url, title: result.file.title });
-                const tr = view.state.tr.replaceSelectionWith(imageNode);
-                view.dispatch(tr);
-              })
-              .catch((err: unknown) => {
-                console.error("Image paste upload failed:", err);
-              });
-          });
+          if (storage) {
+            storage.pendingFiles.set(id, files);
+          }
+
+          editor
+            .chain()
+            .focus()
+            .insertContent({ type: "imageUpload", attrs: { id } })
+            .run();
 
           return true;
         },
