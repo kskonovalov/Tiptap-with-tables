@@ -73,7 +73,7 @@ export function canSetTextAlign(
   if (!editor || !editor.isEditable) return false
   if (
     !isExtensionAvailable(editor, "textAlign") ||
-    isNodeTypeSelected(editor, ["horizontalRule"])
+    isNodeTypeSelected(editor, ["image", "horizontalRule"])
   )
     return false
 

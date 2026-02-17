@@ -9,24 +9,36 @@
     margin: 2rem 0;
     outline: 0.125rem solid transparent;
     border-radius: var(--tt-radius-xs, 0.25rem);
+  }
 
-    &.align-left {
-      margin-right: auto;
-      margin-left: 0;
+  // Alignment for resize-enabled images (container has display: flex)
+  [data-resize-container][data-node="image"] {
+    margin: 2rem 0;
+
+    &[data-align="left"],
+    &:has(img[data-align="left"]) {
+      justify-content: flex-start;
     }
 
-    &.align-center {
-      margin-right: auto;
-      margin-left: auto;
+    &[data-align="center"],
+    &:has(img[data-align="center"]) {
+      justify-content: center;
     }
 
-    &.align-right {
-      margin-left: auto;
-      margin-right: 0;
+    &[data-align="right"],
+    &:has(img[data-align="right"]) {
+      justify-content: flex-end;
     }
 
-    &.align-justify {
-      width: 100%;
+    &[data-align="justify"],
+    &:has(img[data-align="justify"]) {
+      [data-resize-wrapper] {
+        width: 100%;
+      }
+
+      img {
+        width: 100%;
+      }
     }
   }
 

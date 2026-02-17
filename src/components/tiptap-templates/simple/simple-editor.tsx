@@ -65,6 +65,7 @@ import { FontSizeDropdownMenu } from "../../tiptap-ui/fontsize-dropdown-menu/ind
 import { TableButton } from "../../tiptap-ui/table-button/index";
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index";
 import { BubbleMenu } from "../../tiptap-ui/bubble-menu/index";
+import { ImageBubbleMenu } from "../../tiptap-ui/image-bubble-menu/index";
 import { ToolsDropdownMenu } from "../../tiptap-ui/tools-dropdown-menu/index";
 import {
   ColorHighlightPopover,
@@ -95,7 +96,7 @@ import { useResponsiveToolbar } from "../../../hooks/use-responsive-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils";
+import { handleFileUpload, handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils";
 
 // --- Styles ---
 import "./simple-editor.scss";
@@ -328,14 +329,15 @@ export function SimpleEditor() {
             const file = item.getAsFile();
             if (!file) return;
 
-            handleImageUpload(file)
-              .then((url) => {
+            handleFileUpload(file)
+              .then((result) => {
+                if (!result.success || !result.file) return;
                 const { schema } = view.state;
-                const imageNode = schema.nodes.image.create({ src: url });
+                const imageNode = schema.nodes.image.create({ src: result.file.url, title: result.file.title });
                 const tr = view.state.tr.replaceSelectionWith(imageNode);
                 view.dispatch(tr);
               })
-              .catch((err) => {
+              .catch((err: unknown) => {
                 console.error("Image paste upload failed:", err);
               });
           });
@@ -352,25 +354,22 @@ export function SimpleEditor() {
           },
         }),
         HorizontalRule,
-        TextAlign.configure({ types: ["heading", "paragraph", "image"] }),
+        TextAlign.configure({ types: ["heading", "paragraph"] }),
         TaskList,
         TaskItem.configure({ nested: true }),
         Highlight.configure({ multicolor: true }),
         Image.extend({
+          atom: true,
+
           addAttributes() {
             return {
               ...this.parent?.(),
-              textAlign: {
+              "data-align": {
                 default: null,
+                parseHTML: (element) => element.getAttribute("data-align"),
                 renderHTML: (attributes) => {
-                  if (!attributes.textAlign) return {};
-                  return { class: `align-${attributes.textAlign}` };
-                },
-                parseHTML: (element) => {
-                  const match = element.className.match(
-                    /align-(left|center|right|justify)/,
-                  );
-                  return match ? match[1] : null;
+                  if (!attributes["data-align"]) return {};
+                  return { "data-align": attributes["data-align"] };
                 },
               },
             };
@@ -468,6 +467,7 @@ export function SimpleEditor() {
         />
 
         <BubbleMenu editor={editor} />
+        <ImageBubbleMenu editor={editor} />
       </EditorContext.Provider>
     </div>
   );

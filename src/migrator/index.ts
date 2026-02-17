@@ -56,15 +56,15 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
 
   for (const block of editorjsData.blocks) {
     // Handle paragraph and customParagraph blocks
-    if (block.type === "paragraph" || block.type === "customParagraph") {
+    if (block.type.toLowerCase() === "paragraph" || block.type === "customParagraph") {
       content.push(editorjsParagraphToTiptap(block));
-    } else if (block.type === "header") {
+    } else if (block.type.toLowerCase() === "header") {
       content.push(editorjsHeaderToTiptap(block));
-    } else if (block.type === "list") {
+    } else if (block.type.toLowerCase() === "list") {
       content.push(editorjsListToTiptap(block));
-    } else if (block.type === "delimiter") {
+    } else if (block.type.toLowerCase() === "delimiter") {
       content.push(editorjsDelimiterToTiptap(block));
-    } else if (block.type === "image") {
+    } else if (block.type.toLowerCase() === "image") {
       content.push(editorjsImageToTiptap(block));
     }
     // Add more block type handlers here as needed

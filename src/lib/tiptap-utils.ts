@@ -351,6 +351,39 @@ export function selectionWithinConvertibleTypes(
   return false
 }
 
+export interface FileUploadResult {
+  success: 1 | 0
+  file?: {
+    url: string
+    id: string
+    size: string
+    extension: string
+    title: string
+  }
+}
+
+export const handleFileUpload = async (file: File): Promise<FileUploadResult> => {
+  if (!file) {
+    return { success: 0 }
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return { success: 0 }
+  }
+
+  // TODO: replace with real upload endpoint
+  return {
+    success: 1,
+    file: {
+      url: "https://upload.wikimedia.org/wikipedia/commons/a/af/Amsterdam_airphoto.jpg",
+      id: crypto.randomUUID(),
+      size: String(file.size),
+      extension: file.name.split(".").pop() ?? "",
+      title: file.name,
+    },
+  }
+}
+
 /**
  * Handles image upload with progress tracking and abort capability
  * @param file The file to upload
