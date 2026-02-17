@@ -16,6 +16,14 @@ import {
   editorjsListToTiptap,
   tiptapListToEditorjs,
 } from "./converters/list";
+import {
+  editorjsDelimiterToTiptap,
+  tiptapHorizontalRuleToEditorjs,
+} from "./converters/delimiter";
+import {
+  editorjsImageToTiptap,
+  tiptapImageToEditorjs,
+} from "./converters/image";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -54,6 +62,10 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsHeaderToTiptap(block));
     } else if (block.type === "list") {
       content.push(editorjsListToTiptap(block));
+    } else if (block.type === "delimiter") {
+      content.push(editorjsDelimiterToTiptap(block));
+    } else if (block.type === "image") {
+      content.push(editorjsImageToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -117,6 +129,10 @@ export function tiptapToEditorjs(
       node.type === "taskList"
     ) {
       blocks.push(tiptapListToEditorjs(node));
+    } else if (node.type === "horizontalRule") {
+      blocks.push(tiptapHorizontalRuleToEditorjs(node));
+    } else if (node.type === "image") {
+      blocks.push(tiptapImageToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
@@ -148,4 +164,12 @@ export {
   editorjsListToTiptap,
   tiptapListToEditorjs,
 } from "./converters/list";
+export {
+  editorjsDelimiterToTiptap,
+  tiptapHorizontalRuleToEditorjs,
+} from "./converters/delimiter";
+export {
+  editorjsImageToTiptap,
+  tiptapImageToEditorjs,
+} from "./converters/image";
 export { generateBlockId } from "./utils";
