@@ -327,13 +327,16 @@ export function SimpleEditor() {
 
           event.preventDefault();
 
-          const id = crypto.randomUUID();
           const nodeType = view.state.schema.nodes.imageUpload;
 
           if (nodeType) {
-            pendingUploadFiles.set(id, files);
-            const node = nodeType.create({ id });
-            const tr = view.state.tr.replaceSelectionWith(node);
+            let tr = view.state.tr;
+            for (const file of files) {
+              const id = crypto.randomUUID();
+              pendingUploadFiles.set(id, [file]);
+              const node = nodeType.create({ id });
+              tr = tr.replaceSelectionWith(node);
+            }
             view.dispatch(tr);
           }
 
