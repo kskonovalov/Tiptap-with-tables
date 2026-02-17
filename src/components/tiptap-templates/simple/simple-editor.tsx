@@ -313,6 +313,35 @@ export function SimpleEditor() {
           "aria-label": "Main content area, start typing to enter text.",
           class: "simple-editor",
         },
+        handlePaste(view, event) {
+          const items = event.clipboardData?.items;
+          if (!items) return false;
+
+          const imageItems = Array.from(items).filter((item) =>
+            item.type.startsWith("image/"),
+          );
+          if (imageItems.length === 0) return false;
+
+          event.preventDefault();
+
+          imageItems.forEach((item) => {
+            const file = item.getAsFile();
+            if (!file) return;
+
+            handleImageUpload(file)
+              .then((url) => {
+                const { schema } = view.state;
+                const imageNode = schema.nodes.image.create({ src: url });
+                const tr = view.state.tr.replaceSelectionWith(imageNode);
+                view.dispatch(tr);
+              })
+              .catch((err) => {
+                console.error("Image paste upload failed:", err);
+              });
+          });
+
+          return true;
+        },
       },
       extensions: [
         StarterKit.configure({
@@ -323,11 +352,35 @@ export function SimpleEditor() {
           },
         }),
         HorizontalRule,
-        TextAlign.configure({ types: ["heading", "paragraph"] }),
+        TextAlign.configure({ types: ["heading", "paragraph", "image"] }),
         TaskList,
         TaskItem.configure({ nested: true }),
         Highlight.configure({ multicolor: true }),
-        Image,
+        Image.extend({
+          addAttributes() {
+            return {
+              ...this.parent?.(),
+              textAlign: {
+                default: null,
+                renderHTML: (attributes) => {
+                  if (!attributes.textAlign) return {};
+                  return { class: `align-${attributes.textAlign}` };
+                },
+                parseHTML: (element) => {
+                  const match = element.className.match(
+                    /align-(left|center|right|justify)/,
+                  );
+                  return match ? match[1] : null;
+                },
+              },
+            };
+          },
+        }).configure({
+          resize: {
+            enabled: true,
+            alwaysPreserveAspectRatio: true,
+          },
+        }),
         Typography,
         Superscript,
         Subscript,

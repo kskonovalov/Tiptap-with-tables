@@ -224,9 +224,9 @@
     {
       "type": "image",
       "attrs": {
-        "src": "/images/tiptap-ui-placeholder-image.jpg",
-        "alt": "placeholder-image",
-        "title": "placeholder-image"
+        "src": "https://placecats.com/300/200",
+        "alt": "Amsterdam airphoto",
+        "title": "Amsterdam airphoto"
       }
     },
     {

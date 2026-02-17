@@ -374,17 +374,9 @@ export const handleImageUpload = async (
     )
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
-  }
+  onProgress?.({ progress: 100 })
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  return "https://upload.wikimedia.org/wikipedia/commons/a/af/Amsterdam_airphoto.jpg"
 }
 
 type ProtocolOptions = {
