@@ -28,6 +28,15 @@ import {
   editorjsTableToTiptap,
   tiptapTableToEditorjs,
 } from "./converters/table";
+import {
+  editorjsFrameToTiptap,
+  tiptapVideoToEditorjs,
+} from "./converters/video";
+import {
+  editorjsRawToTiptap,
+  editorjsCodeToolToTiptap,
+  tiptapCodeBlockToEditorjs,
+} from "./converters/code";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -72,6 +81,12 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsImageToTiptap(block));
     } else if (block.type.toLowerCase() === "table") {
       content.push(editorjsTableToTiptap(block));
+    } else if (block.type === "Frame") {
+      content.push(editorjsFrameToTiptap(block));
+    } else if (block.type === "Raw") {
+      content.push(editorjsRawToTiptap(block));
+    } else if (block.type === "CodeTool") {
+      content.push(editorjsCodeToolToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -141,6 +156,10 @@ export function tiptapToEditorjs(
       blocks.push(tiptapImageToEditorjs(node));
     } else if (node.type === "table") {
       blocks.push(tiptapTableToEditorjs(node as any));
+    } else if (node.type === "video") {
+      blocks.push(tiptapVideoToEditorjs(node));
+    } else if (node.type === "codeBlock") {
+      blocks.push(tiptapCodeBlockToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
@@ -184,4 +203,13 @@ export {
   editorjsTableToTiptap,
   tiptapTableToEditorjs,
 } from "./converters/table";
+export {
+  editorjsFrameToTiptap,
+  tiptapVideoToEditorjs,
+} from "./converters/video";
+export {
+  editorjsRawToTiptap,
+  editorjsCodeToolToTiptap,
+  tiptapCodeBlockToEditorjs,
+} from "./converters/code";
 export { generateBlockId } from "./utils";
