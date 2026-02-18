@@ -79,10 +79,17 @@ import {
 export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
   const content: TipTapNode[] = [];
 
-  for (const block of editorjsData.blocks) {
+  const blocks = editorjsData.blocks;
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
     // Handle paragraph and customParagraph blocks
     const blockType = block.type.toLowerCase();
-    if (blockType === "paragraph" || blockType === "customparagraph") {
+    if (block.type === "Toggle") {
+      const count = block.data.items ?? 0;
+      const contentBlocks = blocks.slice(i + 1, i + 1 + count);
+      content.push(editorjsToggleToTiptap(block, contentBlocks));
+      i += count;
+    } else if (blockType === "paragraph" || blockType === "customparagraph") {
       content.push(editorjsParagraphToTiptap(block));
     } else if (blockType === "header") {
       content.push(editorjsHeaderToTiptap(block));
@@ -104,8 +111,6 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsAttachesToTiptap(block));
     } else if (blockType === "quote") {
       content.push(editorjsQuoteToTiptap(block));
-    } else if (block.type === "Toggle") {
-      content.push(editorjsToggleToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -184,7 +189,7 @@ export function tiptapToEditorjs(
     } else if (node.type === "blockquote") {
       blocks.push(tiptapBlockquoteToEditorjs(node));
     } else if (node.type === "details") {
-      blocks.push(tiptapDetailsToEditorjs(node));
+      blocks.push(...tiptapDetailsToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
