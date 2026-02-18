@@ -49,6 +49,14 @@ import {
   editorjsToggleToTiptap,
   tiptapDetailsToEditorjs,
 } from "./converters/toggle";
+import {
+  editorjsAlertToTiptap,
+  tiptapAlertToEditorjs,
+} from "./converters/alert";
+import {
+  editorjsWarningToTiptap,
+  tiptapWarningToEditorjs,
+} from "./converters/warning";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -111,6 +119,10 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsAttachesToTiptap(block));
     } else if (blockType === "quote") {
       content.push(editorjsQuoteToTiptap(block));
+    } else if (blockType === "alert") {
+      content.push(editorjsAlertToTiptap(block));
+    } else if (blockType === "warning") {
+      content.push(editorjsWarningToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -190,6 +202,10 @@ export function tiptapToEditorjs(
       blocks.push(tiptapBlockquoteToEditorjs(node));
     } else if (node.type === "details") {
       blocks.push(...tiptapDetailsToEditorjs(node));
+    } else if (node.type === "alert") {
+      blocks.push(tiptapAlertToEditorjs(node));
+    } else if (node.type === "warning") {
+      blocks.push(tiptapWarningToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
@@ -254,4 +270,12 @@ export {
   editorjsToggleToTiptap,
   tiptapDetailsToEditorjs,
 } from "./converters/toggle";
+export {
+  editorjsAlertToTiptap,
+  tiptapAlertToEditorjs,
+} from "./converters/alert";
+export {
+  editorjsWarningToTiptap,
+  tiptapWarningToEditorjs,
+} from "./converters/warning";
 export { generateBlockId } from "./utils";
