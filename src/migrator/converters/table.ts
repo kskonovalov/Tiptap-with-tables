@@ -111,7 +111,7 @@ export function editorjsTableToTiptap(block: EditorJSBlock): TipTapTableNode {
     tiptapFilters = {};
     for (const colKey of Object.keys(data.filters)) {
       const colIndex = parseInt(colKey, 10);
-      const visibleValues = data.filters[colKey];
+      const visibleValues = data.filters[colKey].map((v) => (v === '(Пустое)' ? '' : v));
       const allValues = collectColumnValues(data.content, colIndex, data.withHeadings);
       const hiddenValues = invertFilter(allValues, visibleValues);
       if (hiddenValues.length > 0) {
@@ -228,7 +228,7 @@ export function tiptapTableToEditorjs(node: TipTapTableNode): EditorJSBlock {
 
       const hiddenValues = node.attrs.filters[colKey];
       const allValues = collectTiptapColumnValues(tableRows, colIndex);
-      const visibleValues = invertFilter(allValues, hiddenValues);
+      const visibleValues = invertFilter(allValues, hiddenValues).map((v) => (v === '' ? '(Пустое)' : v));
       if (visibleValues.length > 0) {
         editorjsFilters[colKey] = visibleValues;
       }
