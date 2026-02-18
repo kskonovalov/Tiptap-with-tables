@@ -77,27 +77,28 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
 
   for (const block of editorjsData.blocks) {
     // Handle paragraph and customParagraph blocks
-    if (block.type.toLowerCase() === "paragraph" || block.type === "customParagraph") {
+    const blockType = block.type.toLowerCase();
+    if (blockType === "paragraph" || blockType === "customparagraph") {
       content.push(editorjsParagraphToTiptap(block));
-    } else if (block.type.toLowerCase() === "header") {
+    } else if (blockType === "header") {
       content.push(editorjsHeaderToTiptap(block));
-    } else if (block.type.toLowerCase() === "list") {
+    } else if (blockType === "list") {
       content.push(editorjsListToTiptap(block));
-    } else if (block.type.toLowerCase() === "delimiter") {
+    } else if (blockType === "delimiter") {
       content.push(editorjsDelimiterToTiptap(block));
-    } else if (block.type.toLowerCase() === "image") {
+    } else if (blockType === "image") {
       content.push(editorjsImageToTiptap(block));
-    } else if (block.type.toLowerCase() === "table") {
+    } else if (blockType === "table") {
       content.push(editorjsTableToTiptap(block));
-    } else if (block.type === "Frame") {
+    } else if (blockType === "frame") {
       content.push(editorjsFrameToTiptap(block));
-    } else if (block.type === "Raw") {
+    } else if (blockType === "raw") {
       content.push(editorjsRawToTiptap(block));
-    } else if (block.type === "CodeTool") {
+    } else if (blockType === "codetool") {
       content.push(editorjsCodeToolToTiptap(block));
-    } else if (block.type === "Attaches") {
+    } else if (blockType === "attaches") {
       content.push(editorjsAttachesToTiptap(block));
-    } else if (block.type === "quote") {
+    } else if (blockType === "quote") {
       content.push(editorjsQuoteToTiptap(block));
     }
     // Add more block type handlers here as needed

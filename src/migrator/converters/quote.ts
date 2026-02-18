@@ -44,18 +44,25 @@ export function tiptapBlockquoteToEditorjs(node: TipTapNode): EditorJSBlock {
     (n): n is TipTapParagraphNode => n.type === 'paragraph',
   );
 
-  const text = paragraphs
+  const textParagraphs = paragraphs.length >= 2 ? paragraphs.slice(0, -1) : paragraphs;
+  const captionParagraph = paragraphs.length >= 2 ? paragraphs[paragraphs.length - 1] : null;
+
+  const text = textParagraphs
     .map((p) => convertTipTapNodesToHTML(p.content || []))
     .join('\n');
+
+  const caption = captionParagraph
+    ? convertTipTapNodesToHTML(captionParagraph.content || [])
+    : '';
 
   const alignment = paragraphs[0]?.attrs?.textAlign ?? 'left';
 
   return {
     id: generateBlockId(),
-    type: 'quote',
+    type: 'Quote',
     data: {
       text,
-      caption: '',
+      caption,
       alignment,
     },
   };
