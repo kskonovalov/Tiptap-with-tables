@@ -45,6 +45,10 @@ import {
   editorjsQuoteToTiptap,
   tiptapBlockquoteToEditorjs,
 } from "./converters/quote";
+import {
+  editorjsToggleToTiptap,
+  tiptapDetailsToEditorjs,
+} from "./converters/toggle";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -100,6 +104,8 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsAttachesToTiptap(block));
     } else if (blockType === "quote") {
       content.push(editorjsQuoteToTiptap(block));
+    } else if (block.type === "Toggle") {
+      content.push(editorjsToggleToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -177,6 +183,8 @@ export function tiptapToEditorjs(
       blocks.push(tiptapFileToEditorjs(node));
     } else if (node.type === "blockquote") {
       blocks.push(tiptapBlockquoteToEditorjs(node));
+    } else if (node.type === "details") {
+      blocks.push(tiptapDetailsToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
@@ -237,4 +245,8 @@ export {
   editorjsQuoteToTiptap,
   tiptapBlockquoteToEditorjs,
 } from "./converters/quote";
+export {
+  editorjsToggleToTiptap,
+  tiptapDetailsToEditorjs,
+} from "./converters/toggle";
 export { generateBlockId } from "./utils";
