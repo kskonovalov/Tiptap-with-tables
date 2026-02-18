@@ -57,6 +57,10 @@ import {
   editorjsWarningToTiptap,
   tiptapWarningToEditorjs,
 } from "./converters/warning";
+import {
+  editorjsColumnsToTiptap,
+  tiptapColumnsToEditorjs,
+} from "./converters/columns";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -84,13 +88,12 @@ import {
  * @param editorjsData - EditorJS data object
  * @returns TipTap document
  */
-export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
+/** Internal: converts a flat EditorJS blocks array to TipTap nodes. */
+function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
   const content: TipTapNode[] = [];
 
-  const blocks = editorjsData.blocks;
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
-    // Handle paragraph and customParagraph blocks
     const blockType = block.type.toLowerCase();
     if (block.type === "Toggle") {
       const count = block.data.items ?? 0;
@@ -123,17 +126,22 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsAlertToTiptap(block));
     } else if (blockType === "warning") {
       content.push(editorjsWarningToTiptap(block));
+    } else if (blockType === "columns") {
+      content.push(editorjsColumnsToTiptap(block, convertBlocks));
     }
     // Add more block type handlers here as needed
     else {
       console.warn(`Unsupported EditorJS block type: ${block.type}`);
-      // Optionally convert unknown blocks to paragraphs or skip them
     }
   }
 
+  return content;
+}
+
+export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
   return {
     type: "doc",
-    content,
+    content: convertBlocks(editorjsData.blocks),
   };
 }
 
@@ -164,18 +172,14 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
  * @param options.paragraphBlockType - Use 'paragraph' or 'customParagraph' for paragraph blocks (default: 'paragraph')
  * @returns EditorJS data object
  */
-export function tiptapToEditorjs(
-  tiptapDoc: TipTapDocument,
-  options: {
-    paragraphBlockType?: "paragraph" | "customParagraph";
-  } = {},
-): EditorJSData {
-  const { paragraphBlockType = "paragraph" } = options;
-
+/** Internal: converts a TipTap nodes array to a flat EditorJS blocks array. */
+function convertNodes(
+  nodes: TipTapNode[],
+  paragraphBlockType: "paragraph" | "customParagraph" = "paragraph",
+): EditorJSBlock[] {
   const blocks: EditorJSBlock[] = [];
 
-  for (const node of tiptapDoc.content) {
-    // Handle paragraph nodes
+  for (const node of nodes) {
     if (node.type === "paragraph") {
       blocks.push(tiptapParagraphToEditorjs(node, paragraphBlockType));
     } else if (node.type === "heading") {
@@ -206,17 +210,29 @@ export function tiptapToEditorjs(
       blocks.push(tiptapAlertToEditorjs(node));
     } else if (node.type === "warning") {
       blocks.push(tiptapWarningToEditorjs(node));
+    } else if (node.type === "columns") {
+      blocks.push(tiptapColumnsToEditorjs(node, (inner) => convertNodes(inner, paragraphBlockType)));
     }
     // Add more node type handlers here as needed
     else {
       console.warn(`Unsupported TipTap node type: ${node.type}`);
-      // Optionally convert unknown nodes or skip them
     }
   }
 
+  return blocks;
+}
+
+export function tiptapToEditorjs(
+  tiptapDoc: TipTapDocument,
+  options: {
+    paragraphBlockType?: "paragraph" | "customParagraph";
+  } = {},
+): EditorJSData {
+  const { paragraphBlockType = "paragraph" } = options;
+
   return {
     time: Date.now(),
-    blocks,
+    blocks: convertNodes(tiptapDoc.content, paragraphBlockType),
     version: "2.28.0",
   };
 }
@@ -278,4 +294,8 @@ export {
   editorjsWarningToTiptap,
   tiptapWarningToEditorjs,
 } from "./converters/warning";
+export {
+  editorjsColumnsToTiptap,
+  tiptapColumnsToEditorjs,
+} from "./converters/columns";
 export { generateBlockId } from "./utils";
