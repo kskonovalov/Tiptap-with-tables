@@ -30,16 +30,22 @@ export function editorjsListToTiptap(block: EditorJSBlock): TipTapNode {
   const data = block.data as EditorJSListData;
   const style = data.meta?.style || data.style || 'unordered';
   const items = normalizeItems(data.items);
+  const textAlign = (block.tunes?.alignmentTune?.alignment ?? null) as
+    | 'left'
+    | 'center'
+    | 'right'
+    | 'justify'
+    | null;
 
   if (style === 'checklist') {
-    return buildTaskList(items);
+    return buildTaskList(items, textAlign);
   }
 
   if (style === 'ordered') {
-    return buildOrderedList(items, data.meta);
+    return buildOrderedList(items, data.meta, textAlign);
   }
 
-  return buildBulletList(items);
+  return buildBulletList(items, textAlign);
 }
 
 // ---------------------------------------------------------------------------
@@ -66,7 +72,17 @@ export function tiptapListToEditorjs(node: TipTapNode): EditorJSBlock {
     data.meta = { start: node.attrs.start };
   }
 
-  return { id: generateBlockId(), type: 'list', data };
+  const block: EditorJSBlock = { id: generateBlockId(), type: 'list', data };
+
+  const firstParagraph = (node.content?.[0] as TipTapNode | undefined)?.content?.find(
+    (c) => c.type === 'paragraph',
+  ) as TipTapParagraphNode | undefined;
+  const alignment = firstParagraph?.attrs?.textAlign;
+  if (alignment && alignment !== 'left') {
+    block.tunes = { alignmentTune: { alignment } };
+  }
+
+  return block;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,50 +104,52 @@ function normalizeItems(items: EditorJSListItem[] | string[]): EditorJSListItem[
   return items as EditorJSListItem[];
 }
 
-function buildBulletList(items: EditorJSListItem[]): TipTapBulletListNode {
+type TextAlign = 'left' | 'center' | 'right' | 'justify' | null;
+
+function buildBulletList(items: EditorJSListItem[], textAlign: TextAlign = null): TipTapBulletListNode {
   return {
     type: 'bulletList',
-    content: items.map((item) => buildListItem(item, 'unordered')),
+    content: items.map((item) => buildListItem(item, 'unordered', textAlign)),
   };
 }
 
-function buildOrderedList(items: EditorJSListItem[], meta?: Record<string, any>): TipTapOrderedListNode {
+function buildOrderedList(items: EditorJSListItem[], meta?: Record<string, any>, textAlign: TextAlign = null): TipTapOrderedListNode {
   const node: TipTapOrderedListNode = {
     type: 'orderedList',
     attrs: { start: meta?.start ?? 1 },
-    content: items.map((item) => buildListItem(item, 'ordered')),
+    content: items.map((item) => buildListItem(item, 'ordered', textAlign)),
   };
   return node;
 }
 
-function buildTaskList(items: EditorJSListItem[]): TipTapTaskListNode {
+function buildTaskList(items: EditorJSListItem[], textAlign: TextAlign = null): TipTapTaskListNode {
   return {
     type: 'taskList',
-    content: items.map(buildTaskItem),
+    content: items.map((item) => buildTaskItem(item, textAlign)),
   };
 }
 
-function buildListItem(item: EditorJSListItem, parentStyle: 'ordered' | 'unordered'): TipTapListItemNode {
-  const paragraph = textToParagraph(item.content);
+function buildListItem(item: EditorJSListItem, parentStyle: 'ordered' | 'unordered', textAlign: TextAlign): TipTapListItemNode {
+  const paragraph = textToParagraph(item.content, textAlign);
   const content: (TipTapParagraphNode | TipTapNode)[] = [paragraph];
 
   if (item.items && item.items.length > 0) {
     const nestedList =
       parentStyle === 'ordered'
-        ? buildOrderedList(item.items)
-        : buildBulletList(item.items);
+        ? buildOrderedList(item.items, undefined, textAlign)
+        : buildBulletList(item.items, textAlign);
     content.push(nestedList);
   }
 
   return { type: 'listItem', content };
 }
 
-function buildTaskItem(item: EditorJSListItem): TipTapTaskItemNode {
-  const paragraph = textToParagraph(item.content);
+function buildTaskItem(item: EditorJSListItem, textAlign: TextAlign): TipTapTaskItemNode {
+  const paragraph = textToParagraph(item.content, textAlign);
   const content: (TipTapParagraphNode | TipTapNode)[] = [paragraph];
 
   if (item.items && item.items.length > 0) {
-    content.push(buildTaskList(item.items));
+    content.push(buildTaskList(item.items, textAlign));
   }
 
   return {
@@ -141,11 +159,11 @@ function buildTaskItem(item: EditorJSListItem): TipTapTaskItemNode {
   };
 }
 
-function textToParagraph(html: string): TipTapParagraphNode {
+function textToParagraph(html: string, textAlign: TextAlign = null): TipTapParagraphNode {
   const contentNodes = parseHTMLToTipTapNodes(html || '');
   const node: TipTapParagraphNode = {
     type: 'paragraph',
-    attrs: { textAlign: null },
+    attrs: { textAlign },
   };
   if (contentNodes.length > 0) {
     (node as TipTapNode).content = contentNodes;
