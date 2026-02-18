@@ -130,6 +130,7 @@ export interface EditorJSTableData {
   withHeadings: boolean;
   decoded?: boolean;
   filters?: Record<string, string[]>;
+  everFilteredColumns?: number[];
 }
 
 // TipTap Table Types
