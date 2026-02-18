@@ -37,6 +37,14 @@ import {
   editorjsCodeToolToTiptap,
   tiptapCodeBlockToEditorjs,
 } from "./converters/code";
+import {
+  editorjsAttachesToTiptap,
+  tiptapFileToEditorjs,
+} from "./converters/attaches";
+import {
+  editorjsQuoteToTiptap,
+  tiptapBlockquoteToEditorjs,
+} from "./converters/quote";
 
 /**
  * Converts EditorJS data to TipTap document format
@@ -87,6 +95,10 @@ export function editorjsToTiptap(editorjsData: EditorJSData): TipTapDocument {
       content.push(editorjsRawToTiptap(block));
     } else if (block.type === "CodeTool") {
       content.push(editorjsCodeToolToTiptap(block));
+    } else if (block.type === "Attaches") {
+      content.push(editorjsAttachesToTiptap(block));
+    } else if (block.type === "quote") {
+      content.push(editorjsQuoteToTiptap(block));
     }
     // Add more block type handlers here as needed
     else {
@@ -160,6 +172,10 @@ export function tiptapToEditorjs(
       blocks.push(tiptapVideoToEditorjs(node));
     } else if (node.type === "codeBlock") {
       blocks.push(tiptapCodeBlockToEditorjs(node));
+    } else if (node.type === "file") {
+      blocks.push(tiptapFileToEditorjs(node));
+    } else if (node.type === "blockquote") {
+      blocks.push(tiptapBlockquoteToEditorjs(node));
     }
     // Add more node type handlers here as needed
     else {
@@ -212,4 +228,12 @@ export {
   editorjsCodeToolToTiptap,
   tiptapCodeBlockToEditorjs,
 } from "./converters/code";
+export {
+  editorjsAttachesToTiptap,
+  tiptapFileToEditorjs,
+} from "./converters/attaches";
+export {
+  editorjsQuoteToTiptap,
+  tiptapBlockquoteToEditorjs,
+} from "./converters/quote";
 export { generateBlockId } from "./utils";
