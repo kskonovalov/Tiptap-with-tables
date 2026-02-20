@@ -6,7 +6,7 @@ import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
 import { Image } from "@tiptap/extension-image";
-import { TaskItem, TaskList } from "@tiptap/extension-list";
+import { TaskItem } from "@tiptap/extension-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
 import { Highlight } from "@tiptap/extension-highlight";
@@ -35,6 +35,7 @@ import { ImageUploadNode, pendingUploadFiles } from "../../tiptap-node/image-upl
 import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import { CustomOrderedList } from "../../tiptap-node/ordered-list-node/ordered-list-node-extension";
 import { CustomBulletList } from "../../tiptap-node/bullet-list-node/bullet-list-node-extension";
+import { CustomTaskList } from "../../tiptap-node/task-list-node/task-list-node-extension";
 import { AlertNode } from "../../tiptap-node/alert-node/index";
 import {
   WarningNode,
@@ -359,7 +360,7 @@ export function SimpleEditor() {
         CustomOrderedList,
         CustomBulletList,
         TextAlign.configure({ types: ["heading", "paragraph"] }),
-        TaskList,
+        CustomTaskList,
         TaskItem.configure({ nested: true }),
         Highlight.configure({ multicolor: true }),
         Image.extend({

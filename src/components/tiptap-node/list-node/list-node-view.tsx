@@ -38,6 +38,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
   const [startInputValue, setStartInputValue] = useState("1");
 
   const isOrderedList = node.type.name === "orderedList";
+  const isTaskList = node.type.name === "taskList";
 
   const currentOrderedStyle: OrderedListStyleType =
     (node.attrs.class as OrderedListStyleType) ?? "list-decimal";
@@ -137,8 +138,10 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     ) as HTMLElement | null;
     if (!listEl) return;
 
-    listEl.className =
-      node.attrs.class || (isOrderedList ? "list-decimal" : "list-disc");
+    if (!isTaskList) {
+      listEl.className =
+        node.attrs.class || (isOrderedList ? "list-decimal" : "list-disc");
+    }
 
     if (isOrderedList) {
       (listEl as HTMLOListElement).start = currentOrderedStart;
@@ -330,7 +333,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
             </>
           )}
 
-          {!isOrderedList && (
+          {!isOrderedList && !isTaskList && (
             <>
               <div className="list-control-menu-label">Стиль маркера</div>
               <div className="list-control-style-buttons">
