@@ -33,6 +33,8 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode, pendingUploadFiles } from "../../tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "../../tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
+import { CustomOrderedList } from "../../tiptap-node/ordered-list-node/ordered-list-node-extension";
+import { CustomBulletList } from "../../tiptap-node/bullet-list-node/bullet-list-node-extension";
 import { AlertNode } from "../../tiptap-node/alert-node/index";
 import {
   WarningNode,
@@ -346,12 +348,16 @@ export function SimpleEditor() {
       extensions: [
         StarterKit.configure({
           horizontalRule: false,
+          orderedList: false,
+          bulletList: false,
           link: {
             openOnClick: false,
             enableClickSelection: true,
           },
         }),
         HorizontalRule,
+        CustomOrderedList,
+        CustomBulletList,
         TextAlign.configure({ types: ["heading", "paragraph"] }),
         TaskList,
         TaskItem.configure({ nested: true }),

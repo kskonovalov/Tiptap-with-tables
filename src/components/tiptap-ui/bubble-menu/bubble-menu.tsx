@@ -33,8 +33,8 @@ export function BubbleMenu({ editor: providedEditor }: BubbleMenuProps) {
   return (
     <TiptapBubbleMenu
       editor={editor}
-      tippyOptions={{
-        duration: 100,
+      shouldShow={({ editor }) => !editor.state.selection.empty}
+      options={{
         placement: "top",
       }}
       className="bubble-menu"
