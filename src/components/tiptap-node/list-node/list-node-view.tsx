@@ -86,13 +86,28 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     [editor, closeMenu],
   );
 
-  const setOrderedStart = useCallback(
-    (start: number) => {
-      editor.chain().focus().updateAttributes("orderedList", { start }).run();
-      closeMenu();
-    },
-    [editor, closeMenu],
-  );
+const setOrderedStart = useCallback(
+  (start: number) => {
+    editor.chain().focus().updateAttributes("orderedList", { start }).run()
+
+    requestAnimationFrame(() => {
+      const ol = wrapperRef.current?.querySelector("ol") as HTMLOListElement | null
+      if (!ol) return
+
+      const itemsCount = ol.querySelectorAll(":scope > li").length
+      const safeStart = Math.max(1, start)
+      const maxNumber = safeStart + Math.max(itemsCount - 1, 0)
+      const digits = String(maxNumber).length
+
+      const paddingCh = Math.max(4, digits)
+
+      ol.style.paddingLeft = `${paddingCh}ch`
+    })
+
+    closeMenu()
+  },
+  [editor, closeMenu],
+)
 
   const setBulletStyle = useCallback(
     (style: BulletListStyleType) => {
