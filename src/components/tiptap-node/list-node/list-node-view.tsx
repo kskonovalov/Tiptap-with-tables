@@ -21,6 +21,14 @@ const ORDERED_STYLES: { value: OrderedListStyleType; label: string }[] = [
   { value: "list-lower-roman", label: "i" },
 ];
 
+const ORDERED_STYLE_TO_COUNTER: Record<OrderedListStyleType, string> = {
+  "list-decimal": "decimal",
+  "list-lower-alpha": "lower-alpha",
+  "list-upper-alpha": "upper-alpha",
+  "list-lower-roman": "lower-roman",
+  "list-upper-roman": "upper-roman",
+};
+
 const BULLET_STYLES: { value: BulletListStyleType; label: string }[] = [
   { value: "list-disc", label: "•" },
   { value: "list-check", label: "✓" },
@@ -86,28 +94,13 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     [editor, closeMenu],
   );
 
-const setOrderedStart = useCallback(
-  (start: number) => {
-    editor.chain().focus().updateAttributes("orderedList", { start }).run()
-
-    requestAnimationFrame(() => {
-      const ol = wrapperRef.current?.querySelector("ol") as HTMLOListElement | null
-      if (!ol) return
-
-      const itemsCount = ol.querySelectorAll(":scope > li").length
-      const safeStart = Math.max(1, start)
-      const maxNumber = safeStart + Math.max(itemsCount - 1, 0)
-      const digits = String(maxNumber).length
-
-      const paddingCh = Math.max(4, digits)
-
-      ol.style.paddingLeft = `${paddingCh}ch`
-    })
-
-    closeMenu()
-  },
-  [editor, closeMenu],
-)
+  const setOrderedStart = useCallback(
+    (start: number) => {
+      editor.chain().focus().updateAttributes("orderedList", { start }).run();
+      closeMenu();
+    },
+    [editor, closeMenu],
+  );
 
   const setBulletStyle = useCallback(
     (style: BulletListStyleType) => {
@@ -159,7 +152,9 @@ const setOrderedStart = useCallback(
     }
 
     if (isOrderedList) {
-      (listEl as HTMLOListElement).start = currentOrderedStart;
+      const counterType = ORDERED_STYLE_TO_COUNTER[currentOrderedStyle] ?? "decimal";
+      listEl.style.counterReset = `item ${currentOrderedStart - 1}`;
+      listEl.style.setProperty("--list-counter-type", counterType);
     }
   }, [isOrderedList, node.attrs.class, currentOrderedStart]);
 
@@ -348,7 +343,7 @@ const setOrderedStart = useCallback(
             </>
           )}
 
-          {!isOrderedList && !isTaskList && (
+          {!isOrderedList && (
             <>
               <div className="list-control-menu-label">Стиль маркера</div>
               <div className="list-control-style-buttons">

@@ -51,15 +51,9 @@
 
   // Ordered lists
   ol {
-    list-style: decimal;
-
-    ol {
-      list-style: lower-alpha;
-
-      ol {
-        list-style: lower-roman;
-      }
-    }
+    list-style: none;
+    --list-counter-type: decimal;
+    counter-reset: item 0;
   }
 
   // Unordered lists
@@ -99,12 +93,17 @@
     content: "+";
   }
 
-  // Ordered list class-based styles
-  ol.list-decimal     { list-style-type: decimal; }
-  ol.list-lower-alpha { list-style-type: lower-alpha; }
-  ol.list-upper-alpha { list-style-type: upper-alpha; }
-  ol.list-lower-roman { list-style-type: lower-roman; }
-  ol.list-upper-roman { list-style-type: upper-roman; }
+  // Ordered list counter-based styles
+  ol > li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    counter-increment: item;
+  }
+
+  ol > li::before {
+    content: counters(item, '.', var(--list-counter-type)) '.';
+  }
 
   // Task lists
   ul[data-type="taskList"] {
