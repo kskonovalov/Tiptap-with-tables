@@ -76,8 +76,8 @@
   }
 
   // Custom bullet styles (check mark and plus sign via ::before pseudo-element)
-  ul[data-bullet-style="check"],
-  ul[data-bullet-style="plus"] {
+  ul.list-check,
+  ul.list-plus {
     list-style: none;
     padding-left: 1.75em;
 
@@ -91,13 +91,20 @@
     }
   }
 
-  ul[data-bullet-style="check"] > li::before {
+  ul.list-check > li::before {
     content: "✓";
   }
 
-  ul[data-bullet-style="plus"] > li::before {
+  ul.list-plus > li::before {
     content: "+";
   }
+
+  // Ordered list class-based styles
+  ol.list-decimal     { list-style-type: decimal; }
+  ol.list-lower-alpha { list-style-type: lower-alpha; }
+  ol.list-upper-alpha { list-style-type: upper-alpha; }
+  ol.list-lower-roman { list-style-type: lower-roman; }
+  ol.list-upper-roman { list-style-type: upper-roman; }
 
   // Task lists
   ul[data-type="taskList"] {

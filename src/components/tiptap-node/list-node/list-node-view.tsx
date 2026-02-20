@@ -3,23 +3,23 @@ import {
   NodeViewWrapper,
   type NodeViewProps,
 } from "@tiptap/react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 import type { OrderedListStyleType } from "../ordered-list-node/ordered-list-node-extension"
 import type { BulletListStyleType } from "../bullet-list-node/bullet-list-node-extension"
 
 const ORDERED_STYLES: { value: OrderedListStyleType; label: string }[] = [
-  { value: "decimal", label: "1" },
-  { value: "upper-alpha", label: "A" },
-  { value: "lower-alpha", label: "a" },
-  { value: "upper-roman", label: "I" },
-  { value: "lower-roman", label: "i" },
+  { value: "list-decimal", label: "1" },
+  { value: "list-upper-alpha", label: "A" },
+  { value: "list-lower-alpha", label: "a" },
+  { value: "list-upper-roman", label: "I" },
+  { value: "list-lower-roman", label: "i" },
 ]
 
 const BULLET_STYLES: { value: BulletListStyleType; label: string }[] = [
-  { value: "disc", label: "•" },
-  { value: "check", label: "✓" },
-  { value: "plus", label: "+" },
+  { value: "list-disc", label: "•" },
+  { value: "list-check", label: "✓" },
+  { value: "list-plus", label: "+" },
 ]
 
 export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
@@ -28,17 +28,17 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
   node,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const [isActive, setIsActive] = useState(false)
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [startInputValue, setStartInputValue] = useState("1")
 
   const isOrderedList = node.type.name === "orderedList"
 
   const currentOrderedStyle: OrderedListStyleType =
-    (node.attrs.listStyleType as OrderedListStyleType) ?? "decimal"
+    (node.attrs.class as OrderedListStyleType) ?? "list-decimal"
   const currentOrderedStart: number = (node.attrs.start as number) ?? 1
   const currentBulletStyle: BulletListStyleType =
-    (node.attrs.listStyleType as BulletListStyleType) ?? "disc"
+    (node.attrs.class as BulletListStyleType) ?? "list-disc"
 
   // Keep start input in sync with the node attr
   useEffect(() => {
@@ -47,24 +47,23 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     }
   }, [isOrderedList, currentOrderedStart])
 
-  // Track whether cursor is inside this specific list instance
-  useEffect(() => {
-    const checkActive = () => {
-      const pos = getPos()
-      if (typeof pos !== "number") {
-        setIsActive(false)
-        return
-      }
-      const { from } = editor.state.selection
-      setIsActive(from >= pos && from < pos + node.nodeSize)
-    }
+  // Compute isActive during render so it's correct from the very first render
+  const nodePos = getPos()
+  const isActive =
+    typeof nodePos === "number" &&
+    editor.state.selection.from >= nodePos &&
+    editor.state.selection.from < nodePos + node.nodeSize
 
-    checkActive()
-    editor.on("selectionUpdate", checkActive)
+  // Re-render whenever the selection changes so isActive stays up-to-date
+  useEffect(() => {
+    editor.on("selectionUpdate", forceUpdate)
+    // Retry on next frame in case getPos() wasn't ready on the initial render
+    const raf = requestAnimationFrame(forceUpdate)
     return () => {
-      editor.off("selectionUpdate", checkActive)
+      cancelAnimationFrame(raf)
+      editor.off("selectionUpdate", forceUpdate)
     }
-  }, [editor, getPos, node.nodeSize])
+  }, [editor])
 
   // Close menu on click outside the wrapper
   useEffect(() => {
@@ -93,7 +92,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       editor
         .chain()
         .focus()
-        .updateAttributes("orderedList", { listStyleType: style })
+        .updateAttributes("orderedList", { class: style })
         .run()
     },
     [editor]
@@ -111,7 +110,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       editor
         .chain()
         .focus()
-        .updateAttributes("bulletList", { listStyleType: style })
+        .updateAttributes("bulletList", { class: style })
         .run()
     },
     [editor]
@@ -134,26 +133,17 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
 
   const controlPos = getControlPos()
 
-  // Apply custom attrs to the actual ul/ol element (Tiptap's contentDOMElement)
+  // Apply class and start attrs to the actual ul/ol element (Tiptap's contentDOMElement)
   useEffect(() => {
     const listEl = wrapperRef.current?.querySelector("ol, ul") as HTMLElement | null
     if (!listEl) return
 
-    if (!isOrderedList) {
-      if (currentBulletStyle !== "disc") {
-        listEl.setAttribute("data-bullet-style", currentBulletStyle)
-      } else {
-        listEl.removeAttribute("data-bullet-style")
-      }
-    } else {
-      if (currentOrderedStyle !== "decimal") {
-        listEl.style.listStyleType = currentOrderedStyle
-      } else {
-        listEl.style.removeProperty("list-style-type")
-      }
+    listEl.className = node.attrs.class || (isOrderedList ? "list-decimal" : "list-disc")
+
+    if (isOrderedList) {
       ;(listEl as HTMLOListElement).start = currentOrderedStart
     }
-  }, [isOrderedList, currentBulletStyle, currentOrderedStyle, currentOrderedStart])
+  }, [isOrderedList, node.attrs.class, currentOrderedStart])
 
   return (
     <NodeViewWrapper ref={wrapperRef} className="list-node-wrapper">
