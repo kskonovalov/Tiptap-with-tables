@@ -11,6 +11,7 @@ import type {
   TipTapOrderedListNode,
   TipTapTaskListNode,
 } from '../types';
+import type { OrderedListStyleType } from '../../components/tiptap-node/ordered-list-node/ordered-list-node-extension';
 import { parseHTMLToTipTapNodes, convertTipTapNodesToHTML } from '../html-parser';
 import { generateBlockId } from '../utils';
 
@@ -42,7 +43,7 @@ export function editorjsListToTiptap(block: EditorJSBlock): TipTapNode {
   }
 
   if (style === 'ordered') {
-    return buildOrderedList(items, data.meta, textAlign);
+    return buildOrderedList(items, data.meta, textAlign, data.meta?.listStyle as OrderedListStyleType | undefined);
   }
 
   return buildBulletList(items, textAlign);
@@ -68,8 +69,14 @@ export function tiptapListToEditorjs(node: TipTapNode): EditorJSBlock {
 
   const data: EditorJSListData = { style, items, meta: {} };
 
-  if (node.type === 'orderedList' && node.attrs?.start && node.attrs.start !== 1) {
-    data.meta = { start: node.attrs.start };
+  if (node.type === 'orderedList') {
+    const orderedAttrs = node.attrs as TipTapOrderedListNode['attrs'];
+    if (orderedAttrs?.start && orderedAttrs.start !== 1) {
+      data.meta!.start = orderedAttrs.start;
+    }
+    if (orderedAttrs?.listStyle) {
+      data.meta!.listStyle = orderedAttrs.listStyle as OrderedListStyleType;
+    }
   }
 
   const block: EditorJSBlock = { id: generateBlockId(), type: 'list', data };
@@ -113,10 +120,10 @@ function buildBulletList(items: EditorJSListItem[], textAlign: TextAlign = null)
   };
 }
 
-function buildOrderedList(items: EditorJSListItem[], meta?: Record<string, any>, textAlign: TextAlign = null): TipTapOrderedListNode {
+function buildOrderedList(items: EditorJSListItem[], meta?: Record<string, any>, textAlign: TextAlign = null, listStyle?: OrderedListStyleType): TipTapOrderedListNode {
   const node: TipTapOrderedListNode = {
     type: 'orderedList',
-    attrs: { start: meta?.start ?? 1 },
+    attrs: { start: meta?.start ?? 1, ...(listStyle && { listStyle }) },
     content: items.map((item) => buildListItem(item, 'ordered', textAlign)),
   };
   return node;

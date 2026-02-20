@@ -108,12 +108,13 @@ export interface TipTapTaskItemNode extends TipTapNode {
 
 export interface TipTapBulletListNode extends TipTapNode {
   type: 'bulletList';
+  attrs?: { listStyle?: string };
   content?: TipTapListItemNode[];
 }
 
 export interface TipTapOrderedListNode extends TipTapNode {
   type: 'orderedList';
-  attrs?: { start?: number };
+  attrs?: { start?: number; listStyle?: string };
   content?: TipTapListItemNode[];
 }
 

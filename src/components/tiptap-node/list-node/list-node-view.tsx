@@ -6,7 +6,9 @@ import {
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import type { OrderedListStyleType } from "../ordered-list-node/ordered-list-node-extension";
+import { DEFAULT_ORDERED_STYLE } from "../ordered-list-node/ordered-list-node-extension";
 import type { BulletListStyleType } from "../bullet-list-node/bullet-list-node-extension";
+import { DEFAULT_BULLET_STYLE } from "../bullet-list-node/bullet-list-node-extension";
 import {
   listOptions,
   toggleList,
@@ -49,10 +51,10 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
   const isTaskList = node.type.name === "taskList";
 
   const currentOrderedStyle: OrderedListStyleType =
-    (node.attrs.class as OrderedListStyleType) ?? "list-decimal";
+    (node.attrs.listStyle as OrderedListStyleType) ?? DEFAULT_ORDERED_STYLE;
   const currentOrderedStart: number = (node.attrs.start as number) ?? 1;
   const currentBulletStyle: BulletListStyleType =
-    (node.attrs.class as BulletListStyleType) ?? "list-disc";
+    (node.attrs.listStyle as BulletListStyleType) ?? DEFAULT_BULLET_STYLE;
 
   // Keep start input in sync with the node attr
   useEffect(() => {
@@ -87,7 +89,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       editor
         .chain()
         .focus()
-        .updateAttributes("orderedList", { class: style })
+        .updateAttributes("orderedList", { listStyle: style })
         .run();
       closeMenu();
     },
@@ -107,7 +109,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       editor
         .chain()
         .focus()
-        .updateAttributes("bulletList", { class: style })
+        .updateAttributes("bulletList", { listStyle: style })
         .run();
       closeMenu();
     },
@@ -147,8 +149,10 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     if (!listEl) return;
 
     if (!isTaskList) {
-      listEl.className =
-        node.attrs.class || (isOrderedList ? "list-decimal" : "list-disc");
+      listEl.setAttribute(
+        "data-list-style",
+        node.attrs.listStyle || (isOrderedList ? DEFAULT_ORDERED_STYLE : DEFAULT_BULLET_STYLE),
+      );
     }
 
     if (isOrderedList) {
@@ -156,7 +160,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       listEl.style.counterReset = `item ${currentOrderedStart - 1}`;
       listEl.style.setProperty("--list-counter-type", counterType);
     }
-  }, [isOrderedList, node.attrs.class, currentOrderedStart]);
+  }, [isOrderedList, node.attrs.listStyle, currentOrderedStart]);
 
   // Close menu on click outside the wrapper
   useEffect(() => {

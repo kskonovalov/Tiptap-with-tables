@@ -5,14 +5,16 @@ import { ListNodeViewComponent } from "../list-node/list-node-view"
 
 export type BulletListStyleType = "list-disc" | "list-check" | "list-plus"
 
+export const DEFAULT_BULLET_STYLE: BulletListStyleType = "list-disc"
+
 export const CustomBulletList = BulletList.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      class: {
-        default: "list-disc",
-        parseHTML: (el) => el.getAttribute("class") || "list-disc",
-        renderHTML: (attrs) => ({ class: attrs.class }),
+      listStyle: {
+        default: DEFAULT_BULLET_STYLE,
+        parseHTML: (el) => el.getAttribute("data-list-style") || DEFAULT_BULLET_STYLE,
+        renderHTML: (attrs) => ({ "data-list-style": attrs.listStyle }),
       },
     }
   },
@@ -26,11 +28,11 @@ export const CustomBulletList = BulletList.extend({
           if (!this.editor.isActive(this.name)) {
             return chain()
               .toggleBulletList()
-              .updateAttributes(this.name, { class: className })
+              .updateAttributes(this.name, { listStyle: className })
               .run()
           }
-          if (!this.editor.isActive(this.name, { class: className })) {
-            return commands.updateAttributes(this.name, { class: className })
+          if (!this.editor.isActive(this.name, { listStyle: className })) {
+            return commands.updateAttributes(this.name, { listStyle: className })
           }
           return true
         },
