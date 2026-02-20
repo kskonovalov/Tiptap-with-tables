@@ -33,7 +33,6 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
   const [startInputValue, setStartInputValue] = useState("1")
 
   const isOrderedList = node.type.name === "orderedList"
-  const listTag = isOrderedList ? "ol" : "ul"
 
   const currentOrderedStyle: OrderedListStyleType =
     (node.attrs.listStyleType as OrderedListStyleType) ?? "decimal"
@@ -135,25 +134,30 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
 
   const controlPos = getControlPos()
 
-  // Build attributes to forward to the NodeViewContent list element
-  const contentAttrs: Record<string, unknown> = {}
-  if (isOrderedList) {
-    if (currentOrderedStyle !== "decimal") {
-      contentAttrs.style = { listStyleType: currentOrderedStyle }
-      contentAttrs["data-list-style"] = currentOrderedStyle
+  // Apply custom attrs to the actual ul/ol element (Tiptap's contentDOMElement)
+  useEffect(() => {
+    const listEl = wrapperRef.current?.querySelector("ol, ul") as HTMLElement | null
+    if (!listEl) return
+
+    if (!isOrderedList) {
+      if (currentBulletStyle !== "disc") {
+        listEl.setAttribute("data-bullet-style", currentBulletStyle)
+      } else {
+        listEl.removeAttribute("data-bullet-style")
+      }
+    } else {
+      if (currentOrderedStyle !== "decimal") {
+        listEl.style.listStyleType = currentOrderedStyle
+      } else {
+        listEl.style.removeProperty("list-style-type")
+      }
+      ;(listEl as HTMLOListElement).start = currentOrderedStart
     }
-    if (currentOrderedStart !== 1) {
-      contentAttrs.start = currentOrderedStart
-    }
-  } else {
-    if (currentBulletStyle !== "disc") {
-      contentAttrs["data-bullet-style"] = currentBulletStyle
-    }
-  }
+  }, [isOrderedList, currentBulletStyle, currentOrderedStyle, currentOrderedStart])
 
   return (
     <NodeViewWrapper ref={wrapperRef} className="list-node-wrapper">
-      <NodeViewContent as={listTag} {...contentAttrs} />
+      <NodeViewContent />
 
       {/* Control button — appears when cursor is inside this list */}
       {isActive && controlPos && (

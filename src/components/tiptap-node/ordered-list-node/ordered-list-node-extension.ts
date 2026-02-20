@@ -40,7 +40,9 @@ export const CustomOrderedList = OrderedList.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ListNodeViewComponent)
+    return ReactNodeViewRenderer(ListNodeViewComponent, {
+      contentDOMElementTag: "ol",
+    })
   },
 })
 

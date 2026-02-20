@@ -29,7 +29,9 @@ export const CustomBulletList = BulletList.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ListNodeViewComponent)
+    return ReactNodeViewRenderer(ListNodeViewComponent, {
+      contentDOMElementTag: "ul",
+    })
   },
 })
 
