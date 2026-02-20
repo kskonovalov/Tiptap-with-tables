@@ -43,7 +43,7 @@ export function editorjsListToTiptap(block: EditorJSBlock): TipTapNode {
   }
 
   if (style === 'ordered') {
-    return buildOrderedList(items, data.meta, textAlign, data.meta?.listStyle as OrderedListStyleType | undefined);
+    return buildOrderedList(items, data.meta, textAlign, data.meta?.counterType as OrderedListStyleType | undefined);
   }
 
   return buildBulletList(items, textAlign);
@@ -75,7 +75,7 @@ export function tiptapListToEditorjs(node: TipTapNode): EditorJSBlock {
       data.meta!.start = orderedAttrs.start;
     }
     if (orderedAttrs?.listStyle) {
-      data.meta!.listStyle = orderedAttrs.listStyle as OrderedListStyleType;
+      data.meta!.counterType = orderedAttrs.listStyle as OrderedListStyleType;
     }
   }
 
