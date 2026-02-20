@@ -7,6 +7,11 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import type { OrderedListStyleType } from "../ordered-list-node/ordered-list-node-extension";
 import type { BulletListStyleType } from "../bullet-list-node/bullet-list-node-extension";
+import {
+  listOptions,
+  toggleList,
+  type ListType,
+} from "../../tiptap-ui/list-button/index";
 
 const ORDERED_STYLES: { value: OrderedListStyleType; label: string }[] = [
   { value: "list-decimal", label: "1" },
@@ -95,6 +100,14 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
         .focus()
         .updateAttributes("bulletList", { class: style })
         .run();
+      closeMenu();
+    },
+    [editor, closeMenu],
+  );
+
+  const switchListType = useCallback(
+    (type: ListType) => {
+      toggleList(editor, type);
       closeMenu();
     },
     [editor, closeMenu],
@@ -239,8 +252,11 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
           className="list-control-menu"
           contentEditable={false}
           onPointerDown={(e) => {
-            // keep focus/selection stable while interacting with menu
-            e.preventDefault();
+            // Allow input elements to receive focus normally.
+            // For everything else, prevent the editor from losing its selection.
+            if ((e.target as HTMLElement).tagName !== "INPUT") {
+              e.preventDefault();
+            }
             e.stopPropagation();
           }}
           style={{
@@ -249,6 +265,21 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
             left: `${controlPos.left + 32}px`,
           }}
         >
+          <div className="list-control-menu-label">Тип списка</div>
+          <div className="list-control-style-buttons">
+            {listOptions.map(({ type, label, icon: TypeIcon }) => (
+              <button
+                key={type}
+                type="button"
+                title={label}
+                className={`list-style-option${node.type.name === type ? " active" : ""}`}
+                onClick={() => switchListType(type)}
+              >
+                <TypeIcon width="1em" height="1em" />
+              </button>
+            ))}
+          </div>
+
           {isOrderedList && (
             <>
               <div className="list-control-menu-label">Стиль нумерации</div>
@@ -274,8 +305,8 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
                 value={startInputValue}
                 className="list-start-input"
                 onChange={(e) => setStartInputValue(e.target.value)}
-                onBlur={() => {
-                  const n = parseInt(startInputValue, 10);
+                onBlur={(e) => {
+                  const n = parseInt(e.target.value, 10);
                   if (!isNaN(n) && n >= 1) {
                     setOrderedStart(n);
                   } else {

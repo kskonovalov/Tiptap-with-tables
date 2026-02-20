@@ -6,11 +6,6 @@ import type { Editor } from "@tiptap/react"
 // --- Hooks ---
 import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
-// --- Icons ---
-import { ListIcon } from "../../tiptap-icons/list-icon"
-import { ListOrderedIcon } from "../../tiptap-icons/list-ordered-icon"
-import { ListTodoIcon } from "../../tiptap-icons/list-todo-icon"
-
 // --- Lib ---
 import { isNodeInSchema } from "../../../lib/tiptap-utils"
 
@@ -19,6 +14,7 @@ import {
   canToggleList,
   isListActive,
   listIcons,
+  listOptions,
   type ListType,
 } from "../list-button/index"
 
@@ -42,29 +38,6 @@ export interface UseListDropdownMenuConfig {
   hideWhenUnavailable?: boolean
 }
 
-export interface ListOption {
-  label: string
-  type: ListType
-  icon: React.ElementType
-}
-
-export const listOptions: ListOption[] = [
-  {
-    label: "Маркированный список",
-    type: "bulletList",
-    icon: ListIcon,
-  },
-  {
-    label: "Нумерованный список",
-    type: "orderedList",
-    icon: ListOrderedIcon,
-  },
-  {
-    label: "Список задач",
-    type: "taskList",
-    icon: ListTodoIcon,
-  },
-]
 
 export function canToggleAnyList(
   editor: Editor | null,
@@ -211,6 +184,6 @@ export function useListDropdownMenu(config?: UseListDropdownMenuConfig) {
     types,
     filteredLists,
     label: "Список",
-    Icon: activeList ? listIcons[activeList.type] : ListIcon,
+    Icon: activeList ? listIcons[activeList.type] : listIcons.bulletList,
   }
 }

@@ -58,6 +58,18 @@ export const listLabels: Record<ListType, string> = {
   taskList: "Список задач",
 }
 
+export interface ListOption {
+  label: string
+  type: ListType
+  icon: React.ElementType
+}
+
+export const listOptions: ListOption[] = [
+  { label: listLabels.bulletList, type: "bulletList", icon: ListIcon },
+  { label: listLabels.orderedList, type: "orderedList", icon: ListOrderedIcon },
+  { label: listLabels.taskList, type: "taskList", icon: ListTodoIcon },
+]
+
 export const LIST_SHORTCUT_KEYS: Record<ListType, string> = {
   bulletList: "mod+shift+8",
   orderedList: "mod+shift+7",
