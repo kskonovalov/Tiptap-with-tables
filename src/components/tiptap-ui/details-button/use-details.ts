@@ -86,8 +86,8 @@ export function useDetails(config?: UseDetailsConfig) {
 
   const { editor } = useTiptapEditor(providedEditor)
   const [isVisible, setIsVisible] = useState<boolean>(true)
-  const canSet = canSetDetails(editor)
   const isActive = editor?.isActive("details") || false
+  const canSet = isActive || canSetDetails(editor)
 
   useEffect(() => {
     if (!editor) return
@@ -108,7 +108,17 @@ export function useDetails(config?: UseDetailsConfig) {
   const handleSet = useCallback(() => {
     if (!editor) return false
 
-    const success = setDetails(editor)
+    let success: boolean
+    if (editor.isActive("details")) {
+      try {
+        success = editor.chain().focus().unsetDetails().run()
+      } catch {
+        success = false
+      }
+    } else {
+      success = setDetails(editor)
+    }
+
     if (success) {
       onToggled?.()
     }

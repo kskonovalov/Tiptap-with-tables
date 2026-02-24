@@ -76,6 +76,10 @@ declare module "@tiptap/core" {
        */
       setWarning: () => ReturnType
       /**
+       * Unset (unwrap) a warning node
+       */
+      unsetWarning: () => ReturnType
+      /**
        * Toggle warning node
        */
       toggleWarning: () => ReturnType
@@ -153,11 +157,54 @@ export const WarningNode = Node.create<WarningNodeOptions>({
           
           return true
         },
+      unsetWarning:
+        () =>
+        ({ state, chain }) => {
+          const { selection, schema } = state
+          const { $from } = selection
+
+          // Find the parent warning node
+          let warningPos = -1
+          let warningNode = null
+          for (let d = $from.depth; d > 0; d--) {
+            if ($from.node(d).type.name === "warning") {
+              warningNode = $from.node(d)
+              warningPos = $from.before(d)
+              break
+            }
+          }
+
+          if (!warningNode || warningPos === -1) return false
+
+          const warningEnd = warningPos + warningNode.nodeSize
+
+          // Collect content: title inline content as a paragraph + message blocks
+          const content: any[] = []
+
+          warningNode.forEach((child) => {
+            if (child.type.name === "warningTitle") {
+              const paragraph = schema.nodes.paragraph.create(null, child.content)
+              content.push(paragraph)
+            } else if (child.type.name === "warningMessage") {
+              child.forEach((block) => content.push(block))
+            }
+          })
+
+          if (!content.length) return false
+
+          return chain()
+            .insertContentAt(
+              { from: warningPos, to: warningEnd },
+              content.map((n) => n.toJSON())
+            )
+            .setTextSelection(warningPos + 1)
+            .run()
+        },
       toggleWarning:
         () =>
         ({ commands, editor }) => {
-          if (editor.isActive(this.name)) {
-            return false
+          if (editor.isActive("warning")) {
+            return commands.unsetWarning()
           }
           return commands.setWarning()
         },

@@ -86,8 +86,8 @@ export function useWarning(config?: UseWarningConfig) {
 
   const { editor } = useTiptapEditor(providedEditor)
   const [isVisible, setIsVisible] = useState<boolean>(true)
-  const canSet = canSetWarning(editor)
   const isActive = editor?.isActive("warning") || false
+  const canSet = isActive || canSetWarning(editor)
 
   useEffect(() => {
     if (!editor) return
@@ -108,7 +108,17 @@ export function useWarning(config?: UseWarningConfig) {
   const handleSet = useCallback(() => {
     if (!editor) return false
 
-    const success = setWarning(editor)
+    let success: boolean
+    if (editor.isActive("warning")) {
+      try {
+        success = editor.chain().focus().unsetWarning().run()
+      } catch {
+        success = false
+      }
+    } else {
+      success = setWarning(editor)
+    }
+
     if (success) {
       onInserted?.()
     }
