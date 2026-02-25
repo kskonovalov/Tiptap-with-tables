@@ -42,20 +42,27 @@ function cellToHTML(cell: TipTapNode): string {
 }
 
 /**
- * Extracts plain text from an HTML string by stripping tags
+ * Extracts plain text from an HTML string by stripping tags and decoding HTML entities
  */
 function stripHTML(html: string): string {
-  return html.replace(/<[^>]*>/g, '').trim();
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .trim();
 }
 
 /**
  * Collects all unique plain-text values for a column from data rows
- * (skips the header row when withHeadings is true)
+ * (always skips the first row, which is always treated as the header)
  */
-function collectColumnValues(content: string[][], colIndex: number, withHeadings: boolean): string[] {
+function collectColumnValues(content: string[][], colIndex: number): string[] {
   const values = new Set<string>();
-  const startRow = withHeadings ? 1 : 0;
-  for (let rowIdx = startRow; rowIdx < content.length; rowIdx++) {
+  for (let rowIdx = 1; rowIdx < content.length; rowIdx++) {
     const cell = content[rowIdx][colIndex];
     if (cell !== undefined) {
       values.add(stripHTML(cell));
@@ -75,17 +82,15 @@ function invertFilter(allValues: string[], subsetValues: string[]): string[] {
 
 /**
  * Collects all unique plain-text values for a column from TipTap table rows
- * (skips header rows)
+ * (always skips the first row, which is always treated as the header)
  */
 function collectTiptapColumnValues(tableRows: TipTapTableRowNode[], colIndex: number): string[] {
   const values = new Set<string>();
-  for (const row of tableRows) {
-    const cells = row.content || [];
-    // Skip header rows
-    if (cells.length > 0 && cells[0].type === 'tableHeader') continue;
+  for (let rowIdx = 1; rowIdx < tableRows.length; rowIdx++) {
+    const cells = tableRows[rowIdx].content || [];
     const cell = cells[colIndex];
     if (cell) {
-      values.add(cellToHTML(cell).replace(/<[^>]*>/g, '').trim());
+      values.add(stripHTML(cellToHTML(cell)));
     }
   }
   return Array.from(values);
@@ -112,7 +117,7 @@ export function editorjsTableToTiptap(block: EditorJSBlock): TipTapTableNode {
     for (const colKey of Object.keys(data.filters)) {
       const colIndex = parseInt(colKey, 10);
       const visibleValues = data.filters[colKey].map((v) => (v === '(Пустое)' ? '' : v));
-      const allValues = collectColumnValues(data.content, colIndex, data.withHeadings);
+      const allValues = collectColumnValues(data.content, colIndex);
       const hiddenValues = invertFilter(allValues, visibleValues);
       if (hiddenValues.length > 0) {
         tiptapFilters[colKey] = hiddenValues;
