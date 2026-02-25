@@ -15,22 +15,18 @@
   [data-resize-container][data-node="image"] {
     margin: 2rem 0;
 
-    &[data-align="left"],
     &:has(img[data-align="left"]) {
       justify-content: flex-start;
     }
 
-    &[data-align="center"],
     &:has(img[data-align="center"]) {
       justify-content: center;
     }
 
-    &[data-align="right"],
     &:has(img[data-align="right"]) {
       justify-content: flex-end;
     }
 
-    &[data-align="justify"],
     &:has(img[data-align="justify"]) {
       [data-resize-wrapper] {
         width: 100%;

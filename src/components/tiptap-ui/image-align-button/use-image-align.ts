@@ -91,11 +91,12 @@ export function setImageAlign(
   if (success) {
     // Sync to DOM — the ResizableNodeView doesn't auto-update attributes
     const dom = editor.view.nodeDOM(from) as HTMLElement | null
-    if (dom) {
+    const img = dom?.querySelector('img') ?? null
+    if (img) {
       if (newAlign) {
-        dom.dataset.align = newAlign
+        img.dataset.align = newAlign
       } else {
-        delete dom.dataset.align
+        delete img.dataset.align
       }
     }
   }
