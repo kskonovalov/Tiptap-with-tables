@@ -133,28 +133,61 @@ export const WarningNode = Node.create<WarningNodeOptions>({
     return {
       setWarning:
         () =>
-        ({ chain, state, tr, dispatch }) => {
-          const { from, to } = state.selection
-          
-          // Создать ноды
-          const warningTitleNode = state.schema.nodes.warningTitle.create()
-          const paragraphNode = state.schema.nodes.paragraph.create()
-          const warningMessageNode = state.schema.nodes.warningMessage.create(null, [paragraphNode])
+        ({ state, tr, dispatch }) => {
+          const { $from, from, to } = state.selection
+
+          // Check if cursor is inside a paragraph
+          const currentNode = $from.node($from.depth)
+          const isInParagraph = currentNode.type.name === 'paragraph'
+
+          let titleContent: any = null
+          let messageParagraphContent: any = null
+          let replaceFrom: number
+          let replaceTo: number
+
+          if (isInParagraph) {
+            const paraStart = $from.before($from.depth)
+            const paraEnd = $from.after($from.depth)
+            titleContent = currentNode.content
+            replaceFrom = paraStart
+            replaceTo = paraEnd
+
+            // Check if the next sibling is also a paragraph — use it as the message
+            const nextNode = tr.doc.nodeAt(paraEnd)
+            if (nextNode && nextNode.type.name === 'paragraph') {
+              messageParagraphContent = nextNode.content
+              replaceTo = paraEnd + nextNode.nodeSize
+            }
+          } else {
+            replaceFrom = from
+            replaceTo = to
+          }
+
+          // Build title node
+          const warningTitleNode = (titleContent && titleContent.size > 0)
+            ? state.schema.nodes.warningTitle.create(null, titleContent)
+            : state.schema.nodes.warningTitle.create()
+
+          // Build message paragraph
+          const messageParagraph = (messageParagraphContent && messageParagraphContent.size > 0)
+            ? state.schema.nodes.paragraph.create(null, messageParagraphContent)
+            : state.schema.nodes.paragraph.create()
+
+          const warningMessageNode = state.schema.nodes.warningMessage.create(null, [messageParagraph])
           const warningNode = state.schema.nodes.warning.create(null, [warningTitleNode, warningMessageNode])
-          
-          // Вставить warning node
-          tr.replaceRangeWith(from, to, warningNode)
-          
-          // Установить курсор внутри warningTitle (первая дочерняя нода)
-          const titlePos = from + 1
+
+          tr.replaceRangeWith(replaceFrom, replaceTo, warningNode)
+
+          // Place cursor inside warningTitle
+          const titlePos = replaceFrom + 1
           const resolvedPos = tr.doc.resolve(titlePos)
-          const selection = state.selection.constructor.near(resolvedPos)
+          const selection = (state.selection.constructor as any).near(resolvedPos)
           tr.setSelection(selection)
-          
+
           if (dispatch) {
             dispatch(tr)
           }
-          
+
           return true
         },
       unsetWarning:
