@@ -17,6 +17,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   getPos,
   editor,
 }) => {
+  console.log('TableFilterComponent rerender', node);
   const [columnFilters, setColumnFilters] = useState<
     Map<number, FilterOption[]>
   >(new Map());
@@ -30,14 +31,15 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const pendingFiltersRef = useRef<Map<number, FilterOption[]> | null>(null);
 
   const isEditable = editor.isEditable;
 
   // Загрузить сохранённые фильтры из node.attrs при монтировании
   useEffect(() => {
     const savedFilters = node.attrs.filters || {};
-    if (Object.keys(savedFilters).length > 0) {
       const loadedFilters = new Map<number, FilterOption[]>();
+    if (Object.keys(savedFilters).length > 0) {
       Object.entries(savedFilters).forEach(([colIndex, uncheckedValues]) => {
         const values = collectColumnValues(Number(colIndex));
         const filters: FilterOption[] = [
@@ -54,10 +56,15 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
         ];
         loadedFilters.set(Number(colIndex), filters);
       });
+      // Synchronously store loaded filters in a ref so Effect 2 (apply filters)
+      // can use them in the same flush — before setColumnFilters state update propagates.
+      pendingFiltersRef.current = loadedFilters;
       setColumnFilters(loadedFilters);
+    } else {
+      pendingFiltersRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [node.attrs]);
 
   // Получить количество колонок
   const getColumnCount = useCallback(() => {
@@ -159,7 +166,15 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   );
 
   // Применить фильтры
-  const applyFilters = useCallback(() => {
+  useEffect(() => {
+    // Effect 1 (load filters) runs before this effect in the same flush.
+    // If it just loaded fresh filters from node.attrs, they are in pendingFiltersRef.current —
+    // because setColumnFilters is async and the state update hasn't propagated yet.
+    // Using pendingFiltersRef prevents this effect from seeing a stale empty columnFilters
+    // and wiping node.attrs.filters with an empty object.
+    const effectiveFilters = pendingFiltersRef.current ?? columnFilters;
+    pendingFiltersRef.current = null;
+
     const pos = getPos();
     if (typeof pos !== "number") return;
 
@@ -182,7 +197,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
             rowNode.forEach((cellNode) => {
               if (cellNode.type.name === "tableCell") {
                 const cellText = cellNode.textContent.trim();
-                const filters = columnFilters.get(cellIndex);
+                const filters = effectiveFilters.get(cellIndex);
 
                 if (filters) {
                   const filterOption = filters.find(
@@ -211,7 +226,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       });
 
       const filtersToSave: Record<number, string[]> = {};
-      columnFilters.forEach((filters, colIndex) => {
+      effectiveFilters.forEach((filters, colIndex) => {
         const unchecked = filters.filter((f) => !f.checked).map((f) => f.value);
         if (unchecked.length > 0) {
           filtersToSave[colIndex] = unchecked;
@@ -243,8 +258,8 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
         let shouldHide = false;
 
-        if (columnFilters.size > 0) {
-          columnFilters.forEach((filters, colIndex) => {
+        if (effectiveFilters.size > 0) {
+          effectiveFilters.forEach((filters, colIndex) => {
             const cells = row.querySelectorAll("td");
             const cell = cells[colIndex] as HTMLElement;
             if (!cell) return;
@@ -268,10 +283,6 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       });
     }
   }, [columnFilters, getPos, editor, node, isEditable]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [columnFilters, applyFilters]);
 
   // Действия со строками
   const handleRowAction = useCallback(
@@ -509,12 +520,9 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     const timer1 = setTimeout(updateHeaderRects, 100);
     const timer2 = setTimeout(updateHeaderRects, 300);
 
-    const timer = setInterval(updateHeaderRects, 500);
-
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
-      clearInterval(timer);
     };
   }, [columnCount, node]);
 
