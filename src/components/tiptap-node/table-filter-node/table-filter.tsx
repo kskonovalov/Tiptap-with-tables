@@ -498,33 +498,6 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   const currentFilters =
     openColumnIndex !== null ? columnFilters.get(openColumnIndex) : [];
   const columnCount = getColumnCount();
-  const [headerRects, setHeaderRects] = useState<DOMRect[]>([]);
-
-  useEffect(() => {
-    const updateHeaderRects = () => {
-      if (!wrapperRef.current) return;
-
-      const table = wrapperRef.current.querySelector("table");
-      if (!table) return;
-
-      const firstRow = table.querySelector("tbody tr:first-child");
-      if (!firstRow) return;
-
-      const cells = firstRow.querySelectorAll("th, td");
-      const rects = Array.from(cells).map((cell) =>
-        cell.getBoundingClientRect(),
-      );
-      setHeaderRects(rects);
-    };
-
-    const timer1 = setTimeout(updateHeaderRects, 100);
-    const timer2 = setTimeout(updateHeaderRects, 300);
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [columnCount, node]);
 
   // тк table row переопределён, на текущий момент это единственный способ добавить colgroup
   // без colgroup ресайз таблиц работать не будет
@@ -584,7 +557,11 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       {/* Кнопки фильтров поверх заголовков */}
       <div className="table-filter-buttons-overlay" contentEditable={false}>
         {Array.from({ length: columnCount }).map((_, colIndex) => {
-          const rect = headerRects[colIndex];
+          const table = wrapperRef.current?.querySelector("table");
+          const firstRow = table?.querySelector("tbody tr:first-child");
+          const cells = firstRow?.querySelectorAll("th, td");
+          const cell = cells?.[colIndex] as HTMLElement | undefined;
+          const rect = cell?.getBoundingClientRect();
           const wrapperRect = wrapperRef.current?.getBoundingClientRect();
 
           if (!rect || !wrapperRect) return null;
