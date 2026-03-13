@@ -15,10 +15,13 @@ export function editorjsColumnsToTiptap(
 ): TipTapNode {
   const cols: Array<{ blocks: EditorJSBlock[] }> = block.data.cols ?? [];
 
-  const columnItems: TipTapNode[] = cols.map((col) => ({
-    type: 'columnItem',
-    content: convertBlocks(col.blocks ?? []),
-  }));
+  const columnItems: TipTapNode[] = cols.map((col) => {
+    const content = convertBlocks(col.blocks ?? []);
+    return {
+      type: 'columnItem',
+      content: content.length > 0 ? content : [{ type: 'paragraph' }],
+    };
+  });
 
   return {
     type: 'columns',

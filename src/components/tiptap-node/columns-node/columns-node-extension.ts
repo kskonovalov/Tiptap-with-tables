@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from "@tiptap/core"
+import { TextSelection } from "@tiptap/pm/state"
 
 export type ColumnsCount = 2 | 3
 
@@ -109,7 +110,7 @@ export const ColumnsNode = Node.create<ColumnsNodeOptions>({
           // Установить курсор в первую колонку
           const firstColumnPos = from + 2
           const resolvedPos = tr.doc.resolve(firstColumnPos)
-          const selection = state.selection.constructor.near(resolvedPos)
+          const selection = TextSelection.near(resolvedPos)
           tr.setSelection(selection)
           
           if (dispatch) {
@@ -251,6 +252,8 @@ export const ColumnItem = Node.create({
   defining: true,
 
   selectable: false,
+
+  isolating: true,
 
   parseHTML() {
     return [
