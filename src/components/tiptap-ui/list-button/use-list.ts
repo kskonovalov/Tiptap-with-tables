@@ -166,7 +166,7 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
     if (state.selection.empty || state.selection instanceof TextSelection) {
       const pos = findNodePosition({
         editor,
-        node: state.selection.$anchor.node(1),
+        node: state.selection.$anchor.parent,
       })?.pos
       if (!isValidPosition(pos)) return false
 

@@ -45,6 +45,7 @@ import {
 import { ColumnsNode, ColumnItem } from "../../tiptap-node/columns-node/index";
 import { Color, TextStyle } from "../../tiptap-node/color-node/index";
 import { FontSize } from "../../tiptap-node/fontsize-node/index";
+import { FontFamily } from "../../tiptap-node/fontfamily-node/index";
 import { TableFilter } from "../../tiptap-node/table-filter-node/index";
 import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index";
 import "../../tiptap-node/alert-node/alert-node.scss";
@@ -65,6 +66,7 @@ import { WarningButton } from "../../tiptap-ui/warning-button/index";
 import { ColumnsDropdownMenu } from "../../tiptap-ui/columns-dropdown-menu/index";
 import { ColorDropdownMenu } from "../../tiptap-ui/color-dropdown-menu/index";
 import { FontSizeDropdownMenu } from "../../tiptap-ui/fontsize-dropdown-menu/index";
+import { FontFamilyDropdownMenu } from "../../tiptap-ui/fontfamily-dropdown-menu/index";
 import { TableButton } from "../../tiptap-ui/table-button/index";
 import { TableActionsMenu } from "../../tiptap-ui/table-actions-menu/index";
 import { BubbleMenu } from "../../tiptap-ui/bubble-menu/index";
@@ -174,6 +176,10 @@ const MainToolbarContent = ({
     },
     {
       element: <FontSizeDropdownMenu key="fontsize" portal={isMobile} />,
+      estimatedWidth: 50,
+    },
+    {
+      element: <FontFamilyDropdownMenu key="fontfamily" portal={isMobile} />,
       estimatedWidth: 50,
     },
     {
@@ -407,6 +413,7 @@ export function SimpleEditor() {
         TextStyle,
         Color,
         FontSize,
+        FontFamily,
         ImageUploadNode.configure({
           accept: "image/*",
           maxSize: MAX_FILE_SIZE,

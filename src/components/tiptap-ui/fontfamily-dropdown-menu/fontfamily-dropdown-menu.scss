@@ -1,0 +1,15 @@
+.fontfamily-preview-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.fontfamily-preview-label {
+  flex: 1;
+}
+
+/* Active state highlighting for selected font family */
+[data-radix-dropdown-menu-item][data-active="true"] {
+  background-color: var(--tt-button-active-bg-color);
+  color: var(--tt-button-active-text-color);
+}

@@ -4,14 +4,14 @@ import { forwardRef, useCallback, useState } from "react"
 import { ChevronDownIcon } from "../../tiptap-icons/chevron-down-icon"
 
 // --- Styles ---
-import "./color-dropdown-menu.scss"
+import "./fontfamily-dropdown-menu.scss"
 
 // --- Hooks ---
 import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseColorDropdownMenuConfig } from "./index"
-import { useColorDropdownMenu } from "./index"
+import type { UseFontFamilyDropdownMenuConfig } from "./index"
+import { useFontFamilyDropdownMenu } from "./index"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
@@ -24,9 +24,9 @@ import {
 } from "../../tiptap-ui-primitive/dropdown-menu/index"
 import { Card, CardBody } from "../../tiptap-ui-primitive/card/index"
 
-export interface ColorDropdownMenuProps
+export interface FontFamilyDropdownMenuProps
   extends Omit<ButtonProps, "type">,
-    UseColorDropdownMenuConfig {
+    UseFontFamilyDropdownMenuConfig {
   /**
    * Whether to render the dropdown menu in a portal
    * @default false
@@ -39,11 +39,11 @@ export interface ColorDropdownMenuProps
 }
 
 /**
- * Dropdown menu component for selecting text color in a Tiptap editor.
+ * Dropdown menu component for selecting font family in a Tiptap editor.
  */
-export const ColorDropdownMenu = forwardRef<
+export const FontFamilyDropdownMenu = forwardRef<
   HTMLButtonElement,
-  ColorDropdownMenuProps
+  FontFamilyDropdownMenuProps
 >(
   (
     {
@@ -59,12 +59,12 @@ export const ColorDropdownMenu = forwardRef<
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const {
       isVisible,
-      currentColor,
+      currentFontFamily,
       canSet,
-      colors,
+      families,
       handleSet,
       Icon,
-    } = useColorDropdownMenu({
+    } = useFontFamilyDropdownMenu({
       editor,
       hideWhenUnavailable,
     })
@@ -79,11 +79,19 @@ export const ColorDropdownMenu = forwardRef<
     )
 
     const handleSelect = useCallback(
-      (color: string) => {
-        handleSet(color)
+      (fontFamily: string) => {
+        const isCurrentlySelected = currentFontFamily === fontFamily
+
+        if (isCurrentlySelected) {
+          if (editor) {
+            editor.chain().focus().unsetFontFamily().run()
+          }
+        } else {
+          handleSet(fontFamily)
+        }
         setIsOpen(false)
       },
-      [handleSet]
+      [handleSet, currentFontFamily, editor]
     )
 
     if (!isVisible) {
@@ -96,14 +104,14 @@ export const ColorDropdownMenu = forwardRef<
           <Button
             type="button"
             data-style="ghost"
-            data-active-state={currentColor ? "on" : "off"}
+            data-active-state={currentFontFamily ? "on" : "off"}
             role="button"
             tabIndex={-1}
             disabled={!canSet}
             data-disabled={!canSet}
-            aria-label="Цвет текста"
-            aria-pressed={!!currentColor}
-            tooltip="Цвет текста"
+            aria-label="Шрифт"
+            aria-pressed={!!currentFontFamily}
+            tooltip="Шрифт"
             {...buttonProps}
             ref={ref}
           >
@@ -112,23 +120,22 @@ export const ColorDropdownMenu = forwardRef<
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent side="bottom" align="start" portal={portal} avoidCollisions={false}>
+        <DropdownMenuContent side="bottom" align="start" portal={portal}>
           <Card>
             <CardBody>
-              {colors.map((option) => (
+              {families.map((option) => (
                 <DropdownMenuItem
                   key={option.type}
                   onClick={() => handleSelect(option.value)}
-                  data-active={currentColor === option.value}
+                  data-active={currentFontFamily === option.value}
                 >
-                  <span className="color-preview-wrapper">
+                  <span className="fontfamily-preview-wrapper">
                     <span
-                      className="color-preview-dot"
-                      style={{
-                        backgroundColor: option.value || "currentColor",
-                      }}
-                    />
-                    <span className="color-preview-label">{option.label}</span>
+                      className="fontfamily-preview-label"
+                      style={{ fontFamily: option.value }}
+                    >
+                      {option.label}
+                    </span>
                   </span>
                 </DropdownMenuItem>
               ))}
@@ -140,4 +147,4 @@ export const ColorDropdownMenu = forwardRef<
   }
 )
 
-ColorDropdownMenu.displayName = "ColorDropdownMenu"
+FontFamilyDropdownMenu.displayName = "FontFamilyDropdownMenu"

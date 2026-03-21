@@ -7,61 +7,60 @@ import type { Editor } from "@tiptap/react"
 import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 
 // --- Icons ---
-import { FontSizeIcon } from "../../tiptap-icons/font-size-icon"
+import { TypeIcon } from "../../tiptap-icons/type-icon"
 
 // --- UI Utils ---
 import { isMarkInSchema } from "../../../lib/tiptap-utils"
 
 // --- Types ---
-import { FONT_SIZE_OPTIONS, type FontSizeType } from "../../tiptap-node/fontsize-node/index"
+import { FONT_FAMILY_OPTIONS } from "../../tiptap-node/fontfamily-node/index"
 
 /**
- * Configuration for the font size dropdown menu functionality
+ * Configuration for the font family dropdown menu functionality
  */
-export interface UseFontSizeDropdownMenuConfig {
+export interface UseFontFamilyDropdownMenuConfig {
   /**
    * The Tiptap editor instance.
    */
   editor?: Editor | null
   /**
-   * Whether the dropdown should hide when font size is not available.
+   * Whether the dropdown should hide when font family is not available.
    * @default false
    */
   hideWhenUnavailable?: boolean
 }
 
 /**
- * Checks if font size can be set in the current editor state
+ * Checks if font family can be set in the current editor state
  */
-export function canSetFontSize(editor: Editor | null): boolean {
+export function canSetFontFamily(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false
   if (!isMarkInSchema("textStyle", editor)) return false
 
-  return editor.can().setFontSize("1em")
+  return editor.can().setFontFamily("Arial, Helvetica, sans-serif")
 }
 
 /**
- * Sets text font size
+ * Sets text font family
  */
-export function setFontSize(editor: Editor | null, fontSize: string): boolean {
+export function setFontFamily(editor: Editor | null, fontFamily: string): boolean {
   if (!editor || !editor.isEditable) return false
   if (!isMarkInSchema("textStyle", editor)) return false
 
   try {
-    if (fontSize === "1em" || fontSize === "") {
-      // Unset font size (back to default)
-      return editor.chain().focus().unsetFontSize().run()
+    if (!fontFamily) {
+      return editor.chain().focus().unsetFontFamily().run()
     }
-    return editor.chain().focus().setFontSize(fontSize).run()
+    return editor.chain().focus().setFontFamily(fontFamily).run()
   } catch {
     return false
   }
 }
 
 /**
- * Determines if the font size dropdown menu should be shown
+ * Determines if the font family dropdown menu should be shown
  */
-export function shouldShowFontSizeDropdown(props: {
+export function shouldShowFontFamilyDropdown(props: {
   editor: Editor | null
   hideWhenUnavailable: boolean
 }): boolean {
@@ -71,16 +70,16 @@ export function shouldShowFontSizeDropdown(props: {
   if (!isMarkInSchema("textStyle", editor)) return false
 
   if (hideWhenUnavailable) {
-    return canSetFontSize(editor)
+    return canSetFontFamily(editor)
   }
 
   return true
 }
 
 /**
- * Custom hook that provides font size dropdown menu functionality for Tiptap editor
+ * Custom hook that provides font family dropdown menu functionality for Tiptap editor
  */
-export function useFontSizeDropdownMenu(config?: UseFontSizeDropdownMenuConfig) {
+export function useFontFamilyDropdownMenu(config?: UseFontFamilyDropdownMenuConfig) {
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,
@@ -88,15 +87,15 @@ export function useFontSizeDropdownMenu(config?: UseFontSizeDropdownMenuConfig) 
 
   const { editor } = useTiptapEditor(providedEditor)
   const [isVisible, setIsVisible] = useState<boolean>(true)
-  const canSet = canSetFontSize(editor)
-  const currentFontSize = (editor?.getAttributes("textStyle")?.fontSize as string) || ""
+  const canSet = canSetFontFamily(editor)
+  const currentFontFamily = (editor?.getAttributes("textStyle")?.fontFamily as string) || ""
 
   useEffect(() => {
     if (!editor) return
 
     const handleSelectionUpdate = () => {
       setIsVisible(
-        shouldShowFontSizeDropdown({ editor, hideWhenUnavailable })
+        shouldShowFontFamilyDropdown({ editor, hideWhenUnavailable })
       )
     }
 
@@ -110,20 +109,20 @@ export function useFontSizeDropdownMenu(config?: UseFontSizeDropdownMenuConfig) 
   }, [editor, hideWhenUnavailable])
 
   const handleSet = useCallback(
-    (fontSize: string) => {
+    (fontFamily: string) => {
       if (!editor) return false
-      return setFontSize(editor, fontSize)
+      return setFontFamily(editor, fontFamily)
     },
     [editor]
   )
 
   return {
     isVisible,
-    currentFontSize,
+    currentFontFamily,
     canSet,
-    sizes: FONT_SIZE_OPTIONS,
+    families: FONT_FAMILY_OPTIONS,
     handleSet,
-    label: "Размер шрифта",
-    Icon: FontSizeIcon,
+    label: "Шрифт",
+    Icon: TypeIcon,
   }
 }
