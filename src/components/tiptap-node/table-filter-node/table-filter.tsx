@@ -28,6 +28,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   const [openRowMenu, setOpenRowMenu] = useState<number | null>(null);
   const [openColMenu, setOpenColMenu] = useState<number | null>(null);
   const [openTableMenu, setOpenTableMenu] = useState(false);
+  const [, forceUpdate] = useState(0);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -494,6 +495,25 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isEditable]);
+
+  // Re-render when the wrapper becomes visible (e.g. switching between editors)
+  // so that inline getBoundingClientRect() calls return correct positions.
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          forceUpdate((n) => n + 1);
+        }
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentFilters =
     openColumnIndex !== null ? columnFilters.get(openColumnIndex) : [];
