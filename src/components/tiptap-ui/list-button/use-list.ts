@@ -109,7 +109,6 @@ export function canToggleList(
       "bulletList",
       "orderedList",
       "taskList",
-      "blockquote",
       "codeBlock",
     ])
   )
@@ -214,9 +213,12 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
       const resolvedFrom = state.doc.resolve(from)
       const resolvedTo = state.doc.resolve(to)
 
-      chain = chain
-        .setTextSelection(TextSelection.between(resolvedFrom, resolvedTo))
-        .clearNodes()
+      const LIST_TYPES = new Set(["bulletList", "orderedList", "taskList"])
+      chain = LIST_TYPES.has(selection.node.type.name)
+        ? chain
+            .setTextSelection(TextSelection.between(resolvedFrom, resolvedTo))
+            .clearNodes()
+        : chain.setTextSelection(TextSelection.between(resolvedFrom, resolvedTo))
     }
 
     if (editor.isActive(type)) {
