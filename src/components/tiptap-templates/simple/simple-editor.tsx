@@ -327,6 +327,12 @@ export function SimpleEditor() {
           const items = event.clipboardData?.items;
           if (!items) return false;
 
+          // If clipboard has HTML (e.g. Excel/Word table copy), let Tiptap handle it natively
+          const hasHtml = Array.from(items).some(
+            (item) => item.type === "text/html"
+          );
+          if (hasHtml) return false;
+
           const files = Array.from(items)
             .filter((item) => item.type.startsWith("image/"))
             .map((item) => item.getAsFile())
