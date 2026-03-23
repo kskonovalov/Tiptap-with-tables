@@ -214,11 +214,18 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
       const resolvedTo = state.doc.resolve(to)
 
       const LIST_TYPES = new Set(["bulletList", "orderedList", "taskList"])
-      chain = LIST_TYPES.has(selection.node.type.name)
-        ? chain
-            .setTextSelection(TextSelection.between(resolvedFrom, resolvedTo))
-            .clearNodes()
-        : chain.setTextSelection(TextSelection.between(resolvedFrom, resolvedTo))
+      if (LIST_TYPES.has(selection.node.type.name)) {
+        const listFrom = state.doc.resolve(selection.from + 1)
+        const listTo = state.doc.resolve(selection.to - 1)
+        const itemType =
+          selection.node.type.name === "taskList" ? "taskItem" : "listItem"
+        chain = chain
+          .setTextSelection(TextSelection.between(listFrom, listTo))
+          .liftListItem(itemType)
+          .lift(selection.node.type.name)
+      } else {
+        chain = chain.setTextSelection(TextSelection.between(resolvedFrom, resolvedTo))
+      }
     }
 
     if (editor.isActive(type)) {
