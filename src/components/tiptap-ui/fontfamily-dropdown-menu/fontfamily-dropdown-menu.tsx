@@ -123,6 +123,15 @@ export const FontFamilyDropdownMenu = forwardRef<
         <DropdownMenuContent side="bottom" align="start" portal={portal}>
           <Card>
             <CardBody>
+              <DropdownMenuItem
+                onClick={() => {
+                  editor?.chain().focus().unsetFontFamily().run()
+                  setIsOpen(false)
+                }}
+                data-active={!currentFontFamily}
+              >
+                По умолчанию
+              </DropdownMenuItem>
               {families.map((option) => (
                 <DropdownMenuItem
                   key={option.type}

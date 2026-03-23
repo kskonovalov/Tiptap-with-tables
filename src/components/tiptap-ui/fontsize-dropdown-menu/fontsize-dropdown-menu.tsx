@@ -127,6 +127,15 @@ export const FontSizeDropdownMenu = forwardRef<
         <DropdownMenuContent side="bottom" align="start" portal={portal}>
           <Card>
             <CardBody>
+              <DropdownMenuItem
+                onClick={() => {
+                  editor?.chain().focus().unsetFontSize().run()
+                  setIsOpen(false)
+                }}
+                data-active={!currentFontSize}
+              >
+                По умолчанию
+              </DropdownMenuItem>
               {sizes.map((option) => (
                 <DropdownMenuItem
                   key={option.type}
