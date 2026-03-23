@@ -203,11 +203,17 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       }
     };
 
-    editor.on("transaction", closeIfInside);
+    const closeIfInsideOnTransaction = ({ transaction }: { transaction: { docChanged: boolean; selectionSet: boolean } }) => {
+      if (transaction.docChanged || transaction.selectionSet) {
+        closeIfInside();
+      }
+    };
+
+    editor.on("transaction", closeIfInsideOnTransaction);
     editor.on("selectionUpdate", closeIfInside);
 
     return () => {
-      editor.off("transaction", closeIfInside);
+      editor.off("transaction", closeIfInsideOnTransaction);
       editor.off("selectionUpdate", closeIfInside);
     };
   }, [editor, getPos, node.nodeSize, menuOpen]);
@@ -245,6 +251,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
           className="list-main-control-button"
           contentEditable={false}
           type="button"
+          onMouseMove={(e) => e.stopPropagation()}
           onPointerDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -268,6 +275,7 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
         <div
           className="list-control-menu"
           contentEditable={false}
+          onMouseMove={(e) => e.stopPropagation()}
           onPointerDown={(e) => {
             // Allow input elements to receive focus normally.
             // For everything else, prevent the editor from losing its selection.
