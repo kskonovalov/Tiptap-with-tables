@@ -166,7 +166,26 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
     if (state.selection.empty || state.selection instanceof TextSelection) {
       const pos = findNodePosition({
         editor,
-        node: state.selection.$anchor.parent,
+        node: (() => {
+        const $anchor = state.selection.$anchor
+        const STRUCTURAL_CONTAINERS = new Set([
+          "doc",
+          "blockquote",
+          "tableCell",
+          "tableHeader",
+          "columnItem",
+          "alert",
+          "warningMessage",
+          "detailsContent",
+        ])
+        let targetDepth = 1
+        for (let d = 1; d <= $anchor.depth; d++) {
+          if (STRUCTURAL_CONTAINERS.has($anchor.node(d - 1).type.name)) {
+            targetDepth = d
+          }
+        }
+        return $anchor.node(targetDepth)
+      })(),
       })?.pos
       if (!isValidPosition(pos)) return false
 
