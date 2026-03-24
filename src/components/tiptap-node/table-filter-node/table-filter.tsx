@@ -628,10 +628,22 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       );
 
       if (existingCols.length !== columnCount) {
-        colgroup.innerHTML = "";
+        const firstRowCells = Array.from(
+          table.querySelectorAll("tbody tr:first-child th, tbody tr:first-child td"),
+        );
+        while (colgroup.firstChild) colgroup.removeChild(colgroup.firstChild);
         for (let i = 0; i < columnCount; i++) {
           const col = document.createElement("col");
-          if (widths[i]) col.style.width = widths[i];
+          if (widths[i]) {
+            col.style.width = widths[i];
+          } else {
+            const cell = firstRowCells[i] as HTMLElement | undefined;
+            const colwidthAttr = cell?.getAttribute("colwidth");
+            if (colwidthAttr) {
+              const w = parseInt(colwidthAttr.split(",")[0], 10);
+              if (!isNaN(w) && w > 0) col.style.width = `${w}px`;
+            }
+          }
           colgroup.appendChild(col);
         }
       }
