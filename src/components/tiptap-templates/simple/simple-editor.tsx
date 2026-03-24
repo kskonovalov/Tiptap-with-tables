@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import type { Editor } from "@tiptap/core";
+import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
@@ -154,16 +154,21 @@ function parseSpreadsheetClassStyles(
   return map;
 }
 
+// Valid CSS text-align values that Tiptap's TextAlign extension understands
+const VALID_TEXT_ALIGN = new Set(["left", "right", "center", "justify"]);
+
 /**
  * Normalizes HTML pasted from spreadsheet apps (LibreOffice, OpenOffice, Excel).
+ * Returns the modified document body element for direct use with ProseMirror's DOMParser.
  *
  * - Resolves Excel CSS class-based styles to inline styles (when <style> block is present)
  * - Converts legacy HTML attributes (bgcolor, align) to inline styles
  * - Converts <font color="..."> to <span style="color:...">
  * - Moves text-formatting inline styles from <td>/<th> into proper wrapper elements
  *   so that Tiptap marks (Bold, Italic, Color, etc.) pick them up
+ * - Strips layout-only attributes (height, width) that should not affect the editor
  */
-function normalizePastedTableHTML(html: string): string {
+function normalizePastedTableHTML(html: string): HTMLElement {
   const doc = new DOMParser().parseFromString(html, "text/html");
 
   // Phase A — resolve Excel CSS class styles (only available with unsanitized HTML)
@@ -220,7 +225,8 @@ function normalizePastedTableHTML(html: string): string {
     }
 
     // text-align → wrap in <p> so TextAlign mark applies to the paragraph
-    if (s.textAlign) {
+    // Only wrap for valid CSS values; Excel uses "general" which is not valid CSS
+    if (s.textAlign && VALID_TEXT_ALIGN.has(s.textAlign)) {
       wrapCellChildren(cell, "p", `text-align:${s.textAlign}`);
     }
 
@@ -251,7 +257,18 @@ function normalizePastedTableHTML(html: string): string {
       wrapCellChildren(cell, "b");
   });
 
-  return doc.body.innerHTML;
+  // Phase E — strip height attributes/styles from table elements
+  // (explicit row/cell heights cause visual distortion in the editor)
+  doc.querySelectorAll<HTMLElement>("td, th, tr, col, colgroup").forEach(
+    (el) => {
+      el.removeAttribute("height");
+      el.style.removeProperty("height");
+      el.style.removeProperty("min-height");
+      el.style.removeProperty("max-height");
+    }
+  );
+
+  return doc.body;
 }
 
 // ---------------------------------------------------------------------------
@@ -459,7 +476,6 @@ export function SimpleEditor() {
     "main",
   );
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor(
     {
@@ -509,8 +525,11 @@ export function SimpleEditor() {
                 // use the sanitized HTML already read above.
               }
 
-              const normalized = normalizePastedTableHTML(htmlToProcess);
-              editorRef.current?.commands.insertContent(normalized);
+              const normalizedBody = normalizePastedTableHTML(htmlToProcess);
+              const parser = PMDOMParser.fromSchema(view.state.schema);
+              const slice = parser.parseSlice(normalizedBody);
+              const tr = view.state.tr.replaceSelection(slice);
+              view.dispatch(tr.scrollIntoView());
             };
 
             doInsert();
@@ -618,10 +637,6 @@ export function SimpleEditor() {
     },
     [readonly],
   );
-
-  useEffect(() => {
-    editorRef.current = editor;
-  }, [editor]);
 
   const rect = useCursorVisibility({
     editor,
