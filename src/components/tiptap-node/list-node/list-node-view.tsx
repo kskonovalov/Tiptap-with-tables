@@ -133,10 +133,19 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     if (!listEl) return null;
     const rect = listEl.getBoundingClientRect();
     const wrapperRect = wrapperRef.current.getBoundingClientRect();
-    return {
-      top: rect.top - wrapperRect.top - 28,
-      left: rect.left - wrapperRect.left - 28,
-    };
+
+    let top = rect.top - wrapperRect.top - 28;
+    let left = rect.left - wrapperRect.left - 28;
+
+    // If inside a table cell, clamp so the button doesn't escape the cell
+    const cellEl = listEl.closest("td, th") as HTMLElement | null;
+    if (cellEl) {
+      const cellRect = cellEl.getBoundingClientRect();
+      top = Math.max(top, cellRect.top - wrapperRect.top);
+      left = Math.max(left, cellRect.left - wrapperRect.left);
+    }
+
+    return { top, left };
   };
 
   const controlPos = getControlPos();
