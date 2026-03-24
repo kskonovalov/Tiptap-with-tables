@@ -9,7 +9,6 @@ import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 // --- Icons ---
 import { BanIcon } from "../../tiptap-icons/ban-icon"
 import { HighlighterIcon } from "../../tiptap-icons/highlighter-icon"
-import { PaletteIcon } from "../../tiptap-icons/palette-icon"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
@@ -29,7 +28,6 @@ import {
 // --- Tiptap UI ---
 import type {
   HighlightColor,
-  HighlightMode,
   UseColorHighlightConfig,
 } from "../color-highlight-button/index"
 import {
@@ -48,12 +46,6 @@ export interface ColorHighlightPopoverContentProps {
    * If not provided, defaults to a predefined set of colors.
    */
   colors?: HighlightColor[]
-  /**
-   * The highlighting mode to use.
-   * - "mark": Uses the highlight mark extension (default)
-   * - "node": Uses the node background extension
-   */
-  mode?: HighlightMode
 }
 
 export interface ColorHighlightPopoverProps
@@ -67,12 +59,6 @@ export interface ColorHighlightPopoverProps
    * If not provided, defaults to a predefined set of colors.
    */
   colors?: HighlightColor[]
-  /**
-   * The highlighting mode to use.
-   * - "mark": Uses the highlight mark extension (default)
-   * - "node": Uses the node background extension
-   */
-  mode?: HighlightMode
 }
 
 export const ColorHighlightPopoverButton = forwardRef<
@@ -106,9 +92,8 @@ export function ColorHighlightPopoverContent({
     "var(--tt-color-highlight-purple)",
     "var(--tt-color-highlight-yellow)",
   ]),
-  mode,
 }: ColorHighlightPopoverContentProps) {
-  const { handleRemoveHighlight } = useColorHighlight({ editor, mode })
+  const { handleRemoveHighlight } = useColorHighlight({ editor })
   const isMobile = useIsBreakpoint()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -147,7 +132,6 @@ export function ColorHighlightPopoverContent({
                 key={color.value}
                 editor={editor}
                 highlightColor={color.value}
-                mode={mode}
                 tooltip={color.label}
                 aria-label={`${color.label} highlight color`}
                 tabIndex={index === selectedIndex ? 0 : -1}
@@ -186,22 +170,17 @@ export function ColorHighlightPopover({
     "var(--tt-color-highlight-yellow)",
   ]),
   hideWhenUnavailable = false,
-  mode,
   onApplied,
   ...props
 }: ColorHighlightPopoverProps) {
   const { editor } = useTiptapEditor(providedEditor)
   const [isOpen, setIsOpen] = useState(false)
-  const { isVisible, canColorHighlight, isActive, label } =
+  const { isVisible, canColorHighlight, isActive, label, Icon } =
     useColorHighlight({
       editor,
       hideWhenUnavailable,
-      mode,
       onApplied,
     })
-
-  const triggerLabel = mode === "node" ? "Цвет фона" : label
-  const TriggerIcon = mode === "node" ? PaletteIcon : HighlighterIcon
 
   if (!isVisible) return null
 
@@ -213,15 +192,15 @@ export function ColorHighlightPopover({
           data-active-state={isActive ? "on" : "off"}
           data-disabled={!canColorHighlight}
           aria-pressed={isActive}
-          aria-label={triggerLabel}
-          tooltip={triggerLabel}
+          aria-label={label}
+          tooltip={label}
           {...props}
         >
-          <TriggerIcon className="tiptap-button-icon" />
+          <Icon className="tiptap-button-icon" />
         </ColorHighlightPopoverButton>
       </PopoverTrigger>
       <PopoverContent aria-label="Highlight colors">
-        <ColorHighlightPopoverContent editor={editor} colors={colors} mode={mode} />
+        <ColorHighlightPopoverContent editor={editor} colors={colors} />
       </PopoverContent>
     </Popover>
   )

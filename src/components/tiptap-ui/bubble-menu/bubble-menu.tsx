@@ -10,8 +10,10 @@ import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 // --- Tiptap UI ---
 import { MarkButton } from "../mark-button"
 import { LinkPopover } from "../link-popover"
-import { ColorHighlightPopover } from "../color-highlight-popover"
-import { HIGHLIGHT_COLORS } from "../color-highlight-button"
+import { CellBackgroundColorButton } from "./cell-background-color-button"
+
+// --- UI Primitives ---
+import { Separator } from "../../tiptap-ui-primitive/separator/index"
 
 // --- Styles ---
 import "./bubble-menu.scss"
@@ -49,20 +51,16 @@ export function BubbleMenu({ editor: providedEditor }: BubbleMenuProps) {
       className="bubble-menu"
     >
       <div className="bubble-menu-content">
-        {isCellSelection ? (
-          <ColorHighlightPopover
-            editor={editor}
-            mode="node"
-            colors={HIGHLIGHT_COLORS}
-          />
-        ) : (
+        <MarkButton editor={editor} type="bold" />
+        <MarkButton editor={editor} type="italic" />
+        <MarkButton editor={editor} type="underline" />
+        <MarkButton editor={editor} type="strike" />
+        <MarkButton editor={editor} type="code" />
+        <LinkPopover editor={editor} />
+        {isCellSelection && (
           <>
-            <MarkButton editor={editor} type="bold" />
-            <MarkButton editor={editor} type="italic" />
-            <MarkButton editor={editor} type="underline" />
-            <MarkButton editor={editor} type="strike" />
-            <MarkButton editor={editor} type="code" />
-            <LinkPopover editor={editor} />
+            <Separator />
+            <CellBackgroundColorButton editor={editor} />
           </>
         )}
       </div>

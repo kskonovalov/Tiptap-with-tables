@@ -1,3 +1,10 @@
+.cell-bg-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+}
+
 .bubble-menu {
   background: var(--tt-background);
   border: 1px solid var(--tt-border);
