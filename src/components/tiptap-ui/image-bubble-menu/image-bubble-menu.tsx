@@ -26,7 +26,7 @@ export function ImageBubbleMenu({ editor: providedEditor }: ImageBubbleMenuProps
   return (
     <TiptapBubbleMenu
       editor={editor}
-      tippyOptions={{
+      options={{
         duration: 100,
         placement: "top",
       }}

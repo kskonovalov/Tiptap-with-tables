@@ -12,12 +12,14 @@ interface FilterOption {
 
 type CellCoords = { row: number; col: number };
 
+const MIN_COLUMN_WIDTH = 50;
+
 export const TableFilterComponent: React.FC<NodeViewProps> = ({
   node,
   getPos,
   editor,
 }) => {
-  console.log('TableFilterComponent rerender', node);
+  console.log("TableFilterComponent rerender", node);
   const [columnFilters, setColumnFilters] = useState<
     Map<number, FilterOption[]>
   >(new Map());
@@ -39,7 +41,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   // Загрузить сохранённые фильтры из node.attrs при монтировании
   useEffect(() => {
     const savedFilters = node.attrs.filters || {};
-      const loadedFilters = new Map<number, FilterOption[]>();
+    const loadedFilters = new Map<number, FilterOption[]>();
     if (Object.keys(savedFilters).length > 0) {
       Object.entries(savedFilters).forEach(([colIndex, uncheckedValues]) => {
         const values = collectColumnValues(Number(colIndex));
@@ -513,11 +515,90 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+
+  const columnCount = getColumnCount();
+
+  // Imperative resize handles for readonly mode.
+  // Managed entirely via DOM so positions can be updated live during drag.
+  useEffect(() => {
+    if (isEditable) return;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    let handleEls: HTMLDivElement[] = [];
+
+    const cleanup = () => {
+      handleEls.forEach((h) => h.remove());
+      handleEls = [];
+    };
+
+    // Defer so colgroup and layout are ready
+    const timer = window.setTimeout(() => {
+      const table = wrapper.querySelector("table");
+      if (!table || columnCount <= 0) return;
+
+      const positionHandles = () => {
+        const tableRect = table.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const firstRow = table.querySelector("tbody tr:first-child");
+        const cells = firstRow?.querySelectorAll("th, td");
+        const filterButtons = wrapper.querySelectorAll(".table-filter-button");
+        handleEls.forEach((handle, i) => {
+          const cell = cells?.[i] as HTMLElement | undefined;
+          if (!cell) return;
+          const cellRect = cell.getBoundingClientRect();
+          const rightOffset = cellRect.right - wrapperRect.left;
+          handle.style.left = `${rightOffset - 4}px`;
+          handle.style.top = `${tableRect.top - wrapperRect.top}px`;
+          handle.style.height = `${tableRect.height}px`;
+          const filterBtn = filterButtons[i] as HTMLElement | undefined;
+          if (filterBtn) filterBtn.style.left = `${rightOffset - 28}px`;
+        });
+      };
+
+      for (let i = 0; i < columnCount; i++) {
+        const colIndex = i;
+        const handle = document.createElement("div");
+        handle.style.cssText =
+          "position:absolute;width:8px;cursor:col-resize;z-index:10;";
+
+        handle.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          const cols = table.querySelectorAll("colgroup col");
+          const col = cols[colIndex] as HTMLTableColElement | undefined;
+          if (!col) return;
+
+          const startX = e.clientX;
+          const startWidth = col.offsetWidth || parseInt(col.style.width) || 100;
+
+          const onMouseMove = (moveEvent: MouseEvent) => {
+            col.style.width = `${Math.max(MIN_COLUMN_WIDTH, startWidth + moveEvent.clientX - startX)}px`;
+            positionHandles();
+          };
+          const onMouseUp = () => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+          };
+          document.addEventListener("mousemove", onMouseMove);
+          document.addEventListener("mouseup", onMouseUp);
+        });
+
+        wrapper.appendChild(handle);
+        handleEls.push(handle);
+      }
+
+      positionHandles();
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      cleanup();
+    };
+  }, [isEditable, columnCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentFilters =
     openColumnIndex !== null ? columnFilters.get(openColumnIndex) : [];
-  const columnCount = getColumnCount();
 
   // тк table row переопределён, на текущий момент это единственный способ добавить colgroup
   // без colgroup ресайз таблиц работать не будет
@@ -612,6 +693,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
           );
         })}
       </div>
+
 
       {openColumnIndex !== null &&
         currentFilters &&
