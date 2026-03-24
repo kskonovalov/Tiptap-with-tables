@@ -74,11 +74,12 @@ export const NodeBackground = Extension.create<NodeBackgroundOptions>({
             default: null as string | null,
 
             parseHTML: (element: HTMLElement) => {
-              const styleColor = element.style?.backgroundColor
-              if (styleColor) return styleColor
-
-              const dataColor = element.getAttribute("data-background-color")
-              return dataColor || null
+              return (
+                element.style?.backgroundColor ||
+                element.getAttribute("bgcolor") ||
+                element.getAttribute("data-background-color") ||
+                null
+              )
             },
 
             renderHTML: (attributes) => {

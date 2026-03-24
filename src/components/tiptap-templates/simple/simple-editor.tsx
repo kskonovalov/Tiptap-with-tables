@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import type { Editor } from "@tiptap/core";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
@@ -46,6 +47,7 @@ import { ColumnsNode, ColumnItem } from "../../tiptap-node/columns-node/index";
 import { Color, TextStyle } from "../../tiptap-node/color-node/index";
 import { FontSize } from "../../tiptap-node/fontsize-node/index";
 import { FontFamily } from "../../tiptap-node/fontfamily-node/index";
+import { NodeBackground } from "../../tiptap-extension/node-background-extension";
 import { TableFilter } from "../../tiptap-node/table-filter-node/index";
 import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index";
 import "../../tiptap-node/alert-node/alert-node.scss";
@@ -107,6 +109,152 @@ import { handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils";
 import "./simple-editor.scss";
 
 import content from "./data/content.json";
+
+// ---------------------------------------------------------------------------
+// Paste normalization — preserves spreadsheet formatting (LibreOffice, Excel)
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps all current children of `parent` inside a newly created element.
+ * Uses DOM node moves only — no innerHTML string injection.
+ */
+function wrapCellChildren(
+  parent: HTMLElement,
+  tagName: string,
+  style?: string
+): void {
+  const wrapper = parent.ownerDocument.createElement(tagName);
+  if (style) wrapper.setAttribute("style", style);
+  while (parent.firstChild) wrapper.appendChild(parent.firstChild);
+  parent.appendChild(wrapper);
+}
+
+/**
+ * Parses CSS class rules from a <style> block text.
+ * Returns a map of className → { property: value }.
+ * Filters out mso-* vendor properties (Excel-internal, not valid CSS).
+ */
+function parseSpreadsheetClassStyles(
+  cssText: string
+): Map<string, Record<string, string>> {
+  const map = new Map<string, Record<string, string>>();
+  for (const m of cssText.matchAll(/\.(\w+)\s*\{([^}]+)\}/g)) {
+    const props: Record<string, string> = {};
+    for (const decl of m[2].split(";")) {
+      const idx = decl.indexOf(":");
+      if (idx === -1) continue;
+      const prop = decl.slice(0, idx).trim();
+      const value = decl.slice(idx + 1).trim();
+      if (prop && value && !prop.startsWith("mso-")) {
+        props[prop] = value;
+      }
+    }
+    map.set(m[1], props);
+  }
+  return map;
+}
+
+/**
+ * Normalizes HTML pasted from spreadsheet apps (LibreOffice, OpenOffice, Excel).
+ *
+ * - Resolves Excel CSS class-based styles to inline styles (when <style> block is present)
+ * - Converts legacy HTML attributes (bgcolor, align) to inline styles
+ * - Converts <font color="..."> to <span style="color:...">
+ * - Moves text-formatting inline styles from <td>/<th> into proper wrapper elements
+ *   so that Tiptap marks (Bold, Italic, Color, etc.) pick them up
+ */
+function normalizePastedTableHTML(html: string): string {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+
+  // Phase A — resolve Excel CSS class styles (only available with unsanitized HTML)
+  const cssText = Array.from(doc.querySelectorAll("style"))
+    .map((s) => s.textContent ?? "")
+    .join("\n");
+
+  if (cssText.trim()) {
+    const classStyles = parseSpreadsheetClassStyles(cssText);
+    doc.querySelectorAll<HTMLElement>("[class]").forEach((el) => {
+      Array.from(el.classList).forEach((cls) => {
+        const props = classStyles.get(cls);
+        if (!props) return;
+        for (const [prop, value] of Object.entries(props)) {
+          if (!el.style.getPropertyValue(prop)) {
+            el.style.setProperty(prop, value);
+          }
+        }
+      });
+    });
+  }
+
+  // Phase B — normalize <td>/<th> HTML attributes to inline styles
+  doc.querySelectorAll<HTMLElement>("td, th").forEach((cell) => {
+    const bgcolor = cell.getAttribute("bgcolor");
+    if (bgcolor && !cell.style.backgroundColor) {
+      cell.style.backgroundColor = bgcolor;
+    }
+    const align = cell.getAttribute("align");
+    if (align && !cell.style.textAlign) {
+      cell.style.textAlign = align;
+    }
+  });
+
+  // Phase C — convert <font> elements to <span> with inline color
+  doc.querySelectorAll<HTMLElement>("font").forEach((font) => {
+    const color = font.style.color || font.getAttribute("color") || "";
+    const span = doc.createElement("span");
+    if (color && color !== "windowtext") {
+      span.style.color = color;
+    }
+    while (font.firstChild) span.appendChild(font.firstChild);
+    font.parentNode?.replaceChild(span, font);
+  });
+
+  // Phase D — move <td>/<th> inline styles into wrapper elements
+  doc.querySelectorAll<HTMLElement>("td, th").forEach((cell) => {
+    const s = cell.style;
+
+    // Normalize background shorthand → background-color
+    if (!s.backgroundColor && s.background) {
+      s.backgroundColor = s.background;
+      s.removeProperty("background");
+    }
+
+    // text-align → wrap in <p> so TextAlign mark applies to the paragraph
+    if (s.textAlign) {
+      wrapCellChildren(cell, "p", `text-align:${s.textAlign}`);
+    }
+
+    // vertical-align: super / sub
+    const va = s.verticalAlign;
+    if (va === "super") wrapCellChildren(cell, "sup");
+    else if (va === "sub") wrapCellChildren(cell, "sub");
+
+    // font-size / font-family
+    if (s.fontSize) wrapCellChildren(cell, "span", `font-size:${s.fontSize}`);
+    if (s.fontFamily)
+      wrapCellChildren(cell, "span", `font-family:${s.fontFamily}`);
+
+    // text color (skip Excel placeholder 'windowtext')
+    if (s.color && s.color !== "windowtext") {
+      wrapCellChildren(cell, "span", `color:${s.color}`);
+    }
+
+    // text-decoration (can combine values, e.g. "underline line-through")
+    const td = s.textDecoration;
+    if (td?.includes("line-through")) wrapCellChildren(cell, "s");
+    if (td?.includes("underline")) wrapCellChildren(cell, "u");
+
+    // italic / bold
+    if (s.fontStyle === "italic") wrapCellChildren(cell, "i");
+    const fw = s.fontWeight;
+    if (fw === "bold" || fw === "700" || fw === "600")
+      wrapCellChildren(cell, "b");
+  });
+
+  return doc.body.innerHTML;
+}
+
+// ---------------------------------------------------------------------------
 
 interface ToolbarItem {
   element: React.ReactNode;
@@ -311,6 +459,7 @@ export function SimpleEditor() {
     "main",
   );
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor(
     {
@@ -327,11 +476,46 @@ export function SimpleEditor() {
           const items = event.clipboardData?.items;
           if (!items) return false;
 
-          // If clipboard has HTML (e.g. Excel/Word table copy), let Tiptap handle it natively
           const hasHtml = Array.from(items).some(
             (item) => item.type === "text/html"
           );
-          if (hasHtml) return false;
+
+          if (hasHtml) {
+            // Must read synchronously — clipboardData is only available during the event
+            const sanitizedHtml =
+              event.clipboardData!.getData("text/html") ?? "";
+            event.preventDefault();
+
+            const doInsert = async () => {
+              let htmlToProcess = sanitizedHtml;
+
+              // Try the unsanitized clipboard API (Chromium 104+).
+              // This returns the full HTML including the <style> block that
+              // browsers normally strip, enabling Excel class-based styles to
+              // be resolved. Falls back to sanitized HTML for other browsers.
+              try {
+                const clipItems = await (
+                  navigator.clipboard as any
+                ).read({ unsanitized: ["text/html"] });
+                for (const clipItem of clipItems) {
+                  if (clipItem.types.includes("text/html")) {
+                    const blob = await clipItem.getType("text/html");
+                    htmlToProcess = await blob.text();
+                    break;
+                  }
+                }
+              } catch {
+                // Unsanitized API unavailable (Safari, older Chromium) —
+                // use the sanitized HTML already read above.
+              }
+
+              const normalized = normalizePastedTableHTML(htmlToProcess);
+              editorRef.current?.commands.insertContent(normalized);
+            };
+
+            doInsert();
+            return true;
+          }
 
           const files = Array.from(items)
             .filter((item) => item.type.startsWith("image/"))
@@ -420,6 +604,7 @@ export function SimpleEditor() {
         Color,
         FontSize,
         FontFamily,
+        NodeBackground,
         ImageUploadNode.configure({
           accept: "image/*",
           maxSize: MAX_FILE_SIZE,
@@ -433,6 +618,10 @@ export function SimpleEditor() {
     },
     [readonly],
   );
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   const rect = useCursorVisibility({
     editor,
