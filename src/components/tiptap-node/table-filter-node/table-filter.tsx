@@ -30,6 +30,9 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   const [openRowMenu, setOpenRowMenu] = useState<number | null>(null);
   const [openColMenu, setOpenColMenu] = useState<number | null>(null);
   const [openTableMenu, setOpenTableMenu] = useState(false);
+  const [columnSearches, setColumnSearches] = useState<Map<number, string>>(
+    new Map(),
+  );
   const [, forceUpdate] = useState(0);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -128,6 +131,17 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       const newFilters = new Map(prev);
       const columnFilter = newFilters.get(colIndex) || [];
       const updated = columnFilter.map((f) => ({ ...f, checked: true }));
+      newFilters.set(colIndex, updated);
+      return newFilters;
+    });
+  }, []);
+
+  // Инвертировать фильтры для колонки
+  const invertColumnFilters = useCallback((colIndex: number) => {
+    setColumnFilters((prev) => {
+      const newFilters = new Map(prev);
+      const columnFilter = newFilters.get(colIndex) || [];
+      const updated = columnFilter.map((f) => ({ ...f, checked: !f.checked }));
       newFilters.set(colIndex, updated);
       return newFilters;
     });
@@ -731,8 +745,34 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
                 zIndex: 1000,
               }}
             >
+              <div className="table-filter-search">
+                <input
+                  type="text"
+                  placeholder="Поиск..."
+                  value={columnSearches.get(openColumnIndex) ?? ""}
+                  onChange={(e) => {
+                    setColumnSearches((prev) => {
+                      const next = new Map(prev);
+                      next.set(openColumnIndex, e.target.value);
+                      return next;
+                    });
+                  }}
+                  autoFocus
+                />
+              </div>
               <div className="table-filter-options">
-                {currentFilters.map((filter, index) => (
+                {((): typeof currentFilters => {
+                  const search = (
+                    columnSearches.get(openColumnIndex) ?? ""
+                  ).toLowerCase();
+                  return search.trim() === ""
+                    ? currentFilters
+                    : currentFilters.filter((f) =>
+                        (f.value === "" ? "Пустое" : f.value)
+                          .toLowerCase()
+                          .includes(search),
+                      );
+                })().map((filter, index) => (
                   <label key={index} className="table-filter-option">
                     <input
                       type="checkbox"
@@ -746,6 +786,13 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
                 ))}
               </div>
               <div className="table-filter-actions">
+                <button
+                  type="button"
+                  onClick={() => invertColumnFilters(openColumnIndex)}
+                  className="table-filter-invert-button"
+                >
+                  Инвертировать
+                </button>
                 <button
                   type="button"
                   onClick={() => resetColumnFilters(openColumnIndex)}
