@@ -731,6 +731,21 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  // Re-position filter/sort buttons in editable mode when any ancestor scrolls.
+  useEffect(() => {
+    if (!isEditable) return;
+    let rafId: number;
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => forceUpdate((n) => n + 1));
+    };
+    document.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('scroll', onScroll, true);
+      cancelAnimationFrame(rafId);
+    };
+  }, [isEditable]);
+
   const columnCount = getColumnCount();
 
   // Imperative resize handles for readonly mode.
@@ -741,6 +756,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     if (!wrapper) return;
 
     let handleEls: HTMLDivElement[] = [];
+    let positionHandles: (() => void) | null = null;
 
     const cleanup = () => {
       handleEls.forEach((h) => h.remove());
@@ -752,7 +768,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       const table = wrapper.querySelector("table");
       if (!table || columnCount <= 0) return;
 
-      const positionHandles = () => {
+      positionHandles = () => {
         const tableRect = table.getBoundingClientRect();
         const wrapperRect = wrapper.getBoundingClientRect();
         const firstRow = table.querySelector("tbody tr:first-child");
@@ -791,7 +807,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
           const onMouseMove = (moveEvent: MouseEvent) => {
             col.style.width = `${Math.max(MIN_COLUMN_WIDTH, startWidth + moveEvent.clientX - startX)}px`;
-            positionHandles();
+            positionHandles?.();
           };
           const onMouseUp = () => {
             document.removeEventListener("mousemove", onMouseMove);
@@ -806,10 +822,12 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       }
 
       positionHandles();
+      document.addEventListener('scroll', positionHandles, true);
     }, 50);
 
     return () => {
       clearTimeout(timer);
+      if (positionHandles) document.removeEventListener('scroll', positionHandles, true);
       cleanup();
     };
   }, [isEditable, columnCount]); // eslint-disable-line react-hooks/exhaustive-deps
