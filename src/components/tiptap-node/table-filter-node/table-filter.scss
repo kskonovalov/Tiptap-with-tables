@@ -18,6 +18,44 @@
     pointer-events: none;
   }
 
+  .table-sort-button {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 1px solid var(--table-border-color);
+    background: var(--table-header-bg);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: currentColor;
+    transition: background 0.2s, opacity 0.2s;
+    pointer-events: auto;
+    z-index: 10;
+    opacity: 0.4;
+
+    &:hover {
+      background: var(--tt-gray-light-a-100);
+      opacity: 1;
+    }
+
+    &.active-asc,
+    &.active-desc {
+      opacity: 1;
+      background: var(--tt-primary-color);
+      color: white;
+    }
+
+    .dark & {
+      &:hover {
+        background: var(--tt-gray-dark-a-100);
+      }
+    }
+  }
+
   .table-filter-button {
     width: 1.5rem;
     height: 1.5rem;

@@ -3,7 +3,7 @@ import {
   NodeViewWrapper,
   type NodeViewProps,
 } from "@tiptap/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface FilterOption {
   value: string;
@@ -33,11 +33,17 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
   const [columnSearches, setColumnSearches] = useState<Map<number, string>>(
     new Map(),
   );
+  const [sortState, setSortState] = useState<{
+    col: number;
+    dir: "asc" | "desc";
+  } | null>(null);
   const [, forceUpdate] = useState(0);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const pendingFiltersRef = useRef<Map<number, FilterOption[]> | null>(null);
+  const pendingSortRef = useRef<{ col: number; dir: "asc" | "desc" } | null | undefined>(undefined);
+  const originalRowOrderRef = useRef<HTMLElement[] | null>(null);
 
   const isEditable = editor.isEditable;
 
@@ -69,6 +75,11 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     } else {
       pendingFiltersRef.current = null;
     }
+
+    // Load sort state from node attrs
+    const savedSort = node.attrs.sort ?? null;
+    pendingSortRef.current = savedSort;
+    setSortState(savedSort);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.attrs]);
 
@@ -181,6 +192,195 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
     },
     [openColumnIndex, columnFilters, collectColumnValues],
   );
+
+  // Сортировка по колонке: null → asc → desc → null
+  const handleSortClick = useCallback((colIndex: number) => {
+    setSortState((prev) => {
+      if (!prev || prev.col !== colIndex) return { col: colIndex, dir: "asc" };
+      if (prev.dir === "asc") return { col: colIndex, dir: "desc" };
+      return null;
+    });
+  }, []);
+
+  // Применить сортировку
+  useEffect(() => {
+    const effectiveSort =
+      pendingSortRef.current !== undefined
+        ? pendingSortRef.current
+        : sortState;
+    pendingSortRef.current = undefined;
+
+    const pos = getPos();
+    if (typeof pos !== "number") return;
+
+    if (isEditable) {
+      const { state } = editor;
+      const { tr } = state;
+
+      const tableNode = node;
+      const tablePos = pos;
+
+      // Collect rows
+      const rows: ReturnType<typeof node.child>[] = [];
+      tableNode.forEach((rowNode) => {
+        if (rowNode.type.name === "tableRow") {
+          rows.push(rowNode);
+        }
+      });
+
+      if (rows.length < 2) {
+        // Nothing to sort; just persist attrs if needed
+        const currentSort = JSON.stringify(tableNode.attrs.sort ?? null);
+        const newSort = JSON.stringify(effectiveSort);
+        if (currentSort !== newSort) {
+          tr.setNodeMarkup(tablePos, null, {
+            ...tableNode.attrs,
+            sort: effectiveSort,
+          });
+          editor.view.dispatch(tr);
+        }
+        return;
+      }
+
+      const headerRow = rows[0];
+      const dataRows = rows.slice(1);
+
+      const hasOriginalIndex = dataRows.some(
+        (row) => row.attrs.originalIndex != null,
+      );
+
+      let sortedRows: typeof dataRows;
+
+      if (effectiveSort) {
+        // Stamp originalIndex on rows the first time sort is applied
+        const indexedRows = hasOriginalIndex
+          ? dataRows
+          : dataRows.map((row, i) =>
+              row.type.create(
+                { ...row.attrs, originalIndex: i },
+                row.content,
+                row.marks,
+              ),
+            );
+
+        const getCellText = (row: (typeof indexedRows)[number]) => {
+          let text = "";
+          let i = 0;
+          row.forEach((cell) => {
+            if (i === effectiveSort.col) text = cell.textContent.trim();
+            i++;
+          });
+          return text;
+        };
+
+        sortedRows = [...indexedRows].sort((a, b) => {
+          const cmp = getCellText(a).localeCompare(getCellText(b), undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+          return effectiveSort.dir === "asc" ? cmp : -cmp;
+        });
+      } else if (hasOriginalIndex) {
+        // Restore original order and clear the originalIndex stamps
+        sortedRows = [...dataRows]
+          .sort(
+            (a, b) =>
+              (a.attrs.originalIndex ?? 0) - (b.attrs.originalIndex ?? 0),
+          )
+          .map((row) =>
+            row.type.create(
+              { ...row.attrs, originalIndex: null },
+              row.content,
+              row.marks,
+            ),
+          );
+      } else {
+        sortedRows = dataRows;
+      }
+
+      // Check if rows are already in the desired order (content + attrs)
+      const sameOrder = sortedRows.every((row, i) => row.eq(dataRows[i]));
+
+      const currentSort = JSON.stringify(tableNode.attrs.sort ?? null);
+      const newSort = JSON.stringify(effectiveSort);
+      const attrsChanged = currentSort !== newSort;
+
+      if (sameOrder && !attrsChanged) return;
+
+      const newTableAttrs = { ...tableNode.attrs, sort: effectiveSort };
+
+      if (!sameOrder) {
+        const newTable = tableNode.type.create(
+          newTableAttrs,
+          [headerRow, ...sortedRows],
+          tableNode.marks,
+        );
+        tr.replaceWith(tablePos, tablePos + tableNode.nodeSize, newTable);
+      } else if (attrsChanged) {
+        tr.setNodeMarkup(tablePos, null, newTableAttrs);
+      }
+
+      if (tr.docChanged) {
+        editor.view.dispatch(tr);
+      }
+    } else {
+      // Readonly: reorder DOM rows
+      if (!wrapperRef.current) return;
+      const table = wrapperRef.current.querySelector("table");
+      if (!table) return;
+      const tbody = table.querySelector("tbody");
+      if (!tbody) return;
+
+      const allRows = Array.from(tbody.querySelectorAll("tr")) as HTMLElement[];
+      if (allRows.length <= 1) return;
+
+      // Snapshot original order on first sort activation
+      if (effectiveSort && !originalRowOrderRef.current) {
+        originalRowOrderRef.current = allRows.slice(1);
+      }
+
+      if (!effectiveSort) {
+        if (originalRowOrderRef.current) {
+          // Restore from in-session snapshot
+          originalRowOrderRef.current.forEach((row) => tbody.appendChild(row));
+          originalRowOrderRef.current = null;
+        } else {
+          // Fall back to data-original-index stamps (e.g. page loaded with active sort)
+          const dataRowsDOM = allRows.slice(1);
+          const hasOrigIdx = dataRowsDOM.some(
+            (r) => r.getAttribute("data-original-index") !== null,
+          );
+          if (hasOrigIdx) {
+            [...dataRowsDOM]
+              .sort(
+                (a, b) =>
+                  Number(a.getAttribute("data-original-index") ?? 0) -
+                  Number(b.getAttribute("data-original-index") ?? 0),
+              )
+              .forEach((row) => tbody.appendChild(row));
+          }
+        }
+        return;
+      }
+
+      const sourceRows = originalRowOrderRef.current ?? allRows.slice(1);
+      const sorted = [...sourceRows].sort((a, b) => {
+        const aCells = a.querySelectorAll("td, th");
+        const bCells = b.querySelectorAll("td, th");
+        const aText = (aCells[effectiveSort.col] as HTMLElement | undefined)
+          ?.textContent?.trim() ?? "";
+        const bText = (bCells[effectiveSort.col] as HTMLElement | undefined)
+          ?.textContent?.trim() ?? "";
+        const cmp = aText.localeCompare(bText, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+        return effectiveSort.dir === "asc" ? cmp : -cmp;
+      });
+
+      sorted.forEach((row) => tbody.appendChild(row));
+    }
+  }, [sortState, node, getPos, editor, isEditable]);
 
   // Применить фильтры
   useEffect(() => {
@@ -558,6 +758,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
         const firstRow = table.querySelector("tbody tr:first-child");
         const cells = firstRow?.querySelectorAll("th, td");
         const filterButtons = wrapper.querySelectorAll(".table-filter-button");
+        const sortButtons = wrapper.querySelectorAll(".table-sort-button");
         handleEls.forEach((handle, i) => {
           const cell = cells?.[i] as HTMLElement | undefined;
           if (!cell) return;
@@ -568,6 +769,8 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
           handle.style.height = `${tableRect.height}px`;
           const filterBtn = filterButtons[i] as HTMLElement | undefined;
           if (filterBtn) filterBtn.style.left = `${rightOffset - 28}px`;
+          const sortBtn = sortButtons[i] as HTMLElement | undefined;
+          if (sortBtn) sortBtn.style.left = `${rightOffset - 56}px`;
         });
       };
 
@@ -696,26 +899,52 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
           const filters = columnFilters.get(colIndex);
           const hasActiveFilters = filters?.some((f) => !f.checked) || false;
 
+          const sortClass =
+            sortState?.col === colIndex
+              ? `active-${sortState.dir}`
+              : "";
+
           return (
-            <button
-              key={colIndex}
-              className={`table-filter-button ${
-                hasActiveFilters ? "active" : ""
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleFilterClick(colIndex);
-              }}
-              type="button"
-              style={{
-                position: "absolute",
-                top: `${rect.top - wrapperRect.top + 4}px`,
-                left: `${rect.right - wrapperRect.left - 28}px`,
-              }}
-            >
-              ⋮
-            </button>
+            <React.Fragment key={colIndex}>
+              <button
+                className={`table-sort-button ${sortClass}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSortClick(colIndex);
+                }}
+                type="button"
+                style={{
+                  position: "absolute",
+                  top: `${rect.top - wrapperRect.top + 4}px`,
+                  left: `${rect.right - wrapperRect.left - 56}px`,
+                }}
+              >
+                {sortState?.col === colIndex
+                  ? sortState.dir === "asc"
+                    ? "↑"
+                    : "↓"
+                  : "⇅"}
+              </button>
+              <button
+                className={`table-filter-button ${
+                  hasActiveFilters ? "active" : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleFilterClick(colIndex);
+                }}
+                type="button"
+                style={{
+                  position: "absolute",
+                  top: `${rect.top - wrapperRect.top + 4}px`,
+                  left: `${rect.right - wrapperRect.left - 28}px`,
+                }}
+              >
+                ⋮
+              </button>
+            </React.Fragment>
           );
         })}
       </div>

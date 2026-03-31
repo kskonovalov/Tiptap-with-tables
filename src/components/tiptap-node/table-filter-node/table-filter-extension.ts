@@ -39,6 +39,17 @@ export const TableFilter = TiptapTable.extend({
         parseHTML: (element) => element.getAttribute("data-full-width") === "true",
         renderHTML: (attributes) => attributes.fullWidth ? { "data-full-width": "true" } : {},
       },
+      sort: {
+        default: null,
+        parseHTML: (element) => {
+          const sort = element.getAttribute("data-sort")
+          return sort ? JSON.parse(sort) : null
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.sort) return {}
+          return { "data-sort": JSON.stringify(attributes.sort) }
+        },
+      },
     }
   },
 

@@ -157,6 +157,7 @@ export interface TipTapTableNode extends TipTapNode {
   type: 'table';
   attrs?: {
     filters?: Record<string, string[]>;
+    sort?: { col: number; dir: 'asc' | 'desc' } | null;
     fullWidth?: boolean;
   };
   content?: TipTapTableRowNode[];

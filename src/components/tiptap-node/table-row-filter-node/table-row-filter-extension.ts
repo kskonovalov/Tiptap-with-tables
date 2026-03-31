@@ -14,6 +14,17 @@ export const TableRowFilter = TableRow.extend({
           return { "data-hidden": "true" };
         },
       },
+      originalIndex: {
+        default: null,
+        parseHTML: (element) => {
+          const v = element.getAttribute("data-original-index");
+          return v !== null ? Number(v) : null;
+        },
+        renderHTML: (attributes) => {
+          if (attributes.originalIndex === null || attributes.originalIndex === undefined) return {};
+          return { "data-original-index": String(attributes.originalIndex) };
+        },
+      },
     };
   },
 });
