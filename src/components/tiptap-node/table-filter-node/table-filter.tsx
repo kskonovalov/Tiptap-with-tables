@@ -757,9 +757,15 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
 
     let handleEls: HTMLDivElement[] = [];
     let positionHandles: (() => void) | null = null;
+    let handlesContainer: HTMLDivElement | null = null;
+    let onHandleMouseDown: ((e: MouseEvent) => void) | null = null;
 
     const cleanup = () => {
-      handleEls.forEach((h) => h.remove());
+      if (handlesContainer && onHandleMouseDown) {
+        handlesContainer.removeEventListener("mousedown", onHandleMouseDown);
+      }
+      handlesContainer?.remove();
+      handlesContainer = null;
       handleEls = [];
     };
 
@@ -790,36 +796,44 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
         });
       };
 
+      handlesContainer = document.createElement("div");
+      handlesContainer.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;";
+
       for (let i = 0; i < columnCount; i++) {
-        const colIndex = i;
         const handle = document.createElement("div");
         handle.style.cssText =
-          "position:absolute;width:8px;cursor:col-resize;z-index:10;";
-
-        handle.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          const cols = table.querySelectorAll("colgroup col");
-          const col = cols[colIndex] as HTMLTableColElement | undefined;
-          if (!col) return;
-
-          const startX = e.clientX;
-          const startWidth = col.offsetWidth || parseInt(col.style.width) || 100;
-
-          const onMouseMove = (moveEvent: MouseEvent) => {
-            col.style.width = `${Math.max(MIN_COLUMN_WIDTH, startWidth + moveEvent.clientX - startX)}px`;
-            positionHandles?.();
-          };
-          const onMouseUp = () => {
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-          };
-          document.addEventListener("mousemove", onMouseMove);
-          document.addEventListener("mouseup", onMouseUp);
-        });
-
-        wrapper.appendChild(handle);
+          "position:absolute;width:8px;cursor:col-resize;z-index:10;pointer-events:auto;";
+        handle.dataset.colIndex = String(i);
+        handlesContainer.appendChild(handle);
         handleEls.push(handle);
       }
+
+      onHandleMouseDown = (e: MouseEvent) => {
+        const colIndexStr = (e.target as HTMLElement).dataset.colIndex;
+        if (colIndexStr == null) return;
+        const colIndex = parseInt(colIndexStr, 10);
+        e.preventDefault();
+        const cols = table.querySelectorAll("colgroup col");
+        const col = cols[colIndex] as HTMLTableColElement | undefined;
+        if (!col) return;
+
+        const startX = e.clientX;
+        const startWidth = col.offsetWidth || parseInt(col.style.width) || 100;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          col.style.width = `${Math.max(MIN_COLUMN_WIDTH, startWidth + moveEvent.clientX - startX)}px`;
+          positionHandles?.();
+        };
+        const onMouseUp = () => {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        };
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      };
+
+      handlesContainer.addEventListener("mousedown", onHandleMouseDown);
+      wrapper.appendChild(handlesContainer);
 
       positionHandles();
       document.addEventListener('scroll', positionHandles, true);
