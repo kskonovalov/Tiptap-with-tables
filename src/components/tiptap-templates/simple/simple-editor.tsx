@@ -103,7 +103,7 @@ import { useResponsiveToolbar } from "../../../hooks/use-responsive-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "../../../lib/tiptap-utils";
+import { handleImageUpload, MAX_FILE_SIZE, sanitizeUrl } from "../../../lib/tiptap-utils";
 
 // --- Styles ---
 import "./simple-editor.scss";
@@ -686,6 +686,16 @@ export function SimpleEditor() {
           editor={editor}
           role="presentation"
           className="simple-editor-content"
+          onClick={(e) => {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            const target = (e.target as HTMLElement).closest("a");
+            if (!target?.href) return;
+            const url = sanitizeUrl(target.href);
+            if (url) {
+              e.preventDefault();
+              window.open(url, "_blank", "noopener,noreferrer");
+            }
+          }}
         />
 
         <BubbleMenu editor={editor} />
