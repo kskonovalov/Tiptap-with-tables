@@ -121,6 +121,10 @@ export function parseHTMLToTipTapNodes(html: string): (TipTapNode | TipTapTextNo
         return;
       }
 
+      if (el.tagName.toLowerCase() === 'span' && el.textContent === '\u25BC') {
+        return;
+      }
+
       const ownMarks = marksFromElement(el);
       const combined = normalizeMarks([...inheritedMarks, ...ownMarks]);
 
@@ -147,6 +151,7 @@ export function parseHTMLToTipTapNodes(html: string): (TipTapNode | TipTapTextNo
  * Supports nested tags via a stack
  */
 function parseHTMLSimple(html: string): (TipTapNode | TipTapTextNode)[] {
+  html = html.replace(/<span[^>]*>\u25BC<\/span>/gi, '');
   const nodes: (TipTapNode | TipTapTextNode)[] = [];
   const tagPattern = /<(\/?)([a-zA-Z][\w:-]*)([^>]*)>/g;
 
