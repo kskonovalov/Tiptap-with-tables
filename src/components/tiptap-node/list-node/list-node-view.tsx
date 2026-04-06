@@ -9,11 +9,16 @@ import type { OrderedListStyleType } from "../ordered-list-node/ordered-list-nod
 import { DEFAULT_ORDERED_STYLE } from "../ordered-list-node/ordered-list-node-extension";
 import type { BulletListStyleType } from "../bullet-list-node/bullet-list-node-extension";
 import { DEFAULT_BULLET_STYLE } from "../bullet-list-node/bullet-list-node-extension";
+import { AlignLeftIcon } from "../../tiptap-icons/align-left-icon";
+import { AlignCenterIcon } from "../../tiptap-icons/align-center-icon";
+import { AlignRightIcon } from "../../tiptap-icons/align-right-icon";
 import {
   listOptions,
   toggleList,
   type ListType,
 } from "../../tiptap-ui/list-button/index";
+
+export type ListAlignType = "left" | "center" | "right";
 
 const ORDERED_STYLES: { value: OrderedListStyleType; label: string }[] = [
   { value: "list-decimal", label: "1" },
@@ -55,6 +60,8 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
   const currentOrderedStart: number = (node.attrs.start as number) ?? 1;
   const currentBulletStyle: BulletListStyleType =
     (node.attrs.listStyle as BulletListStyleType) ?? DEFAULT_BULLET_STYLE;
+  const currentListAlign: ListAlignType =
+    (node.attrs.listAlign as ListAlignType) ?? "left";
 
   // Keep start input in sync with the node attr
   useEffect(() => {
@@ -116,6 +123,13 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
     [editor, closeMenu],
   );
 
+  const setListAlign = useCallback(
+    (align: ListAlignType) => {
+      editor.chain().focus().updateAttributes(node.type.name, { listAlign: align }).run();
+    },
+    [editor, node.type.name],
+  );
+
   const switchListType = useCallback(
     (type: ListType) => {
       toggleList(editor, type);
@@ -169,7 +183,13 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
       listEl.style.counterReset = `item ${currentOrderedStart - 1}`;
       listEl.style.setProperty("--list-counter-type", counterType);
     }
-  }, [isOrderedList, node.attrs.listStyle, currentOrderedStart]);
+
+    if (node.attrs.listAlign) {
+      listEl.setAttribute("data-list-align", node.attrs.listAlign);
+    } else {
+      listEl.removeAttribute("data-list-align");
+    }
+  }, [isOrderedList, node.attrs.listStyle, currentOrderedStart, node.attrs.listAlign]);
 
   // Close menu on click outside the wrapper
   useEffect(() => {
@@ -383,6 +403,26 @@ export const ListNodeViewComponent: React.FC<NodeViewProps> = ({
               </div>
             </>
           )}
+
+          <div className="list-control-menu-label">Выравнивание</div>
+          <div className="list-control-style-buttons">
+            {(
+              [
+                { value: "left" as ListAlignType, Icon: AlignLeftIcon },
+                { value: "center" as ListAlignType, Icon: AlignCenterIcon },
+                { value: "right" as ListAlignType, Icon: AlignRightIcon },
+              ]
+            ).map(({ value, Icon }) => (
+              <button
+                key={value}
+                type="button"
+                className={`list-style-option${currentListAlign === value ? " active" : ""}`}
+                onClick={() => setListAlign(value)}
+              >
+                <Icon width="1em" height="1em" />
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </NodeViewWrapper>

@@ -4,6 +4,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react"
 import { ListNodeViewComponent } from "../list-node/list-node-view"
 
 export type BulletListStyleType = "list-disc" | "list-check" | "list-plus"
+export type ListAlignType = "left" | "center" | "right"
 
 export const DEFAULT_BULLET_STYLE: BulletListStyleType = "list-disc"
 
@@ -15,6 +16,11 @@ export const CustomBulletList = BulletList.extend({
         default: DEFAULT_BULLET_STYLE,
         parseHTML: (el) => el.getAttribute("data-list-style") || DEFAULT_BULLET_STYLE,
         renderHTML: (attrs) => ({ "data-list-style": attrs.listStyle }),
+      },
+      listAlign: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-list-align") || null,
+        renderHTML: (attrs) => attrs.listAlign ? { "data-list-align": attrs.listAlign } : {},
       },
     }
   },

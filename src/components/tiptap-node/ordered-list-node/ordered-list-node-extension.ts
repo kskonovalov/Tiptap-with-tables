@@ -21,6 +21,11 @@ export const CustomOrderedList = OrderedList.extend({
         parseHTML: (el) => el.getAttribute("data-list-style") || DEFAULT_ORDERED_STYLE,
         renderHTML: (attrs) => ({ "data-list-style": attrs.listStyle }),
       },
+      listAlign: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-list-align") || null,
+        renderHTML: (attrs) => attrs.listAlign ? { "data-list-align": attrs.listAlign } : {},
+      },
     }
   },
 

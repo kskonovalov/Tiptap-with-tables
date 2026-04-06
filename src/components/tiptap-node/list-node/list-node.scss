@@ -287,6 +287,53 @@
     }
   }
 
+  // ── List alignment ─────────────────────────────────────────────────────────
+
+  // Bullet lists: bring marker into text flow so it moves with the content
+  ul:not([data-type="taskList"])[data-list-align="center"],
+  ul:not([data-type="taskList"])[data-list-align="right"] {
+    list-style-position: inside;
+
+    > li::before {
+      margin-left: 0;
+    }
+  }
+
+  ul:not([data-type="taskList"])[data-list-align="center"] {
+    text-align: center;
+  }
+
+  ul:not([data-type="taskList"])[data-list-align="right"] {
+    text-align: right;
+  }
+
+  // Ordered lists: override grid → flex so counter + text move together
+  ol[data-list-align="center"] > li,
+  ol[data-list-align="right"] > li {
+    display: flex;
+    gap: 0.25em;
+    align-items: baseline;
+  }
+
+  ol[data-list-align="center"] > li {
+    justify-content: center;
+  }
+
+  ol[data-list-align="right"] > li {
+    justify-content: flex-end;
+  }
+
+  // Task lists: checkbox + text are already a flex row, shift as a unit
+  ul[data-type="taskList"][data-list-align="center"] > li {
+    justify-content: center;
+  }
+
+  ul[data-type="taskList"][data-list-align="right"] > li {
+    justify-content: flex-end;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+
   .list-start-input {
     width: 5rem;
     height: 1.75rem;
