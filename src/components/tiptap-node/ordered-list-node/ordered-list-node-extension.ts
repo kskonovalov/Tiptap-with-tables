@@ -2,7 +2,6 @@ import { mergeAttributes, type CommandProps } from "@tiptap/core"
 import { OrderedList } from "@tiptap/extension-list"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { ListNodeViewComponent } from "../list-node/list-node-view"
-import { withErrorBlock } from "../with-error-block"
 
 export type OrderedListStyleType =
   | "list-decimal"
@@ -59,7 +58,7 @@ export const CustomOrderedList = OrderedList.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(withErrorBlock(ListNodeViewComponent), {
+    return ReactNodeViewRenderer(ListNodeViewComponent, {
       contentDOMElementTag: "ol",
     })
   },

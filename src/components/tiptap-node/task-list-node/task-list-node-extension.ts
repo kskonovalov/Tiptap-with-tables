@@ -1,7 +1,6 @@
 import { TaskList } from "@tiptap/extension-list"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { ListNodeViewComponent } from "../list-node/list-node-view"
-import { withErrorBlock } from "../with-error-block"
 
 export const CustomTaskList = TaskList.extend({
   addAttributes() {
@@ -16,7 +15,7 @@ export const CustomTaskList = TaskList.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(withErrorBlock(ListNodeViewComponent), {
+    return ReactNodeViewRenderer(ListNodeViewComponent, {
       contentDOMElementTag: "ul",
     })
   },

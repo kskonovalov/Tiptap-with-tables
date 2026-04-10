@@ -644,13 +644,6 @@ export function SimpleEditor() {
       extensions,
       content: safeContent,
       editable: !readonly,
-      dispatchTransaction({ transaction, next }) {
-        try {
-          next(transaction);
-        } catch (err) {
-          console.error("[tiptap] transaction error, reverting:", err);
-        }
-      },
     },
     [readonly],
   );

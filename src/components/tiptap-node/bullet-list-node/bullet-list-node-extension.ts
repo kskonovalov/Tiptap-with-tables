@@ -2,7 +2,6 @@ import { mergeAttributes, type CommandProps } from "@tiptap/core"
 import { BulletList } from "@tiptap/extension-list"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { ListNodeViewComponent } from "../list-node/list-node-view"
-import { withErrorBlock } from "../with-error-block"
 
 export type BulletListStyleType = "list-disc" | "list-check" | "list-plus"
 export type ListAlignType = "left" | "center" | "right"
@@ -55,7 +54,7 @@ export const CustomBulletList = BulletList.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(withErrorBlock(ListNodeViewComponent), {
+    return ReactNodeViewRenderer(ListNodeViewComponent, {
       contentDOMElementTag: "ul",
     })
   },

@@ -1,7 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { WarningNodeComponent } from "./warning-node"
-import { withErrorBlock } from "../with-error-block"
 import type { Editor } from "@tiptap/core"
 
 export interface WarningNodeOptions {
@@ -127,7 +126,7 @@ export const WarningNode = Node.create<WarningNodeOptions>({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(withErrorBlock(WarningNodeComponent))
+    return ReactNodeViewRenderer(WarningNodeComponent)
   },
 
   addCommands() {

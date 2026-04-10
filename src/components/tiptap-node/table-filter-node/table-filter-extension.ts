@@ -1,7 +1,6 @@
 import { Table as TiptapTable } from "@tiptap/extension-table"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { TableFilterComponent } from "./table-filter"
-import { withErrorBlock } from "../with-error-block"
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -55,7 +54,7 @@ export const TableFilter = TiptapTable.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(withErrorBlock(TableFilterComponent), {
+    return ReactNodeViewRenderer(TableFilterComponent, {
       contentDOMElementTag: "tbody",
     })
   },
