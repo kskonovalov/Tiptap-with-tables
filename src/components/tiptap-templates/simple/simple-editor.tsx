@@ -38,6 +38,7 @@ import { CustomOrderedList } from "../../tiptap-node/ordered-list-node/ordered-l
 import { CustomBulletList } from "../../tiptap-node/bullet-list-node/bullet-list-node-extension";
 import { CustomTaskList } from "../../tiptap-node/task-list-node/task-list-node-extension";
 import { AlertNode } from "../../tiptap-node/alert-node/index";
+import { ErrorBlockNode } from "../../tiptap-node/error-block-node/index";
 import {
   WarningNode,
   WarningTitle,
@@ -51,6 +52,7 @@ import { NodeBackground } from "../../tiptap-extension/node-background-extension
 import { TableFilter } from "../../tiptap-node/table-filter-node/index";
 import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index";
 import "../../tiptap-node/alert-node/alert-node.scss";
+import "../../tiptap-node/error-block-node/error-block-node.scss";
 import "../../tiptap-node/warning-node/warning-node.scss";
 import "../../tiptap-node/columns-node/columns-node.scss";
 import "../../tiptap-node/table-node/table-node.scss";
@@ -614,6 +616,7 @@ export function SimpleEditor() {
         DetailsSummary,
         DetailsContent,
         AlertNode,
+        ErrorBlockNode,
         WarningNode,
         WarningTitle,
         WarningMessage,

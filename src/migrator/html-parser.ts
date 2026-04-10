@@ -139,7 +139,7 @@ export function parseHTMLToTipTapNodes(html: string): (TipTapNode | TipTapTextNo
       walk(child, []);
     }
 
-    return nodes.length > 0 ? nodes : [{ type: 'text', text: '' }];
+    return nodes;
   }
 
   // Node.js fallback (regex)
@@ -295,7 +295,7 @@ function parseHTMLSimple(html: string): (TipTapNode | TipTapTextNode)[] {
     pushText(html.substring(lastIndex));
   }
 
-  return nodes.length > 0 ? nodes : [{ type: 'text', text: '' }];
+  return nodes;
 }
 
 /**

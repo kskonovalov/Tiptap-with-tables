@@ -1,0 +1,18 @@
+.tiptap.ProseMirror {
+  [data-error-block="true"] {
+    padding: 0.4rem 0.75rem;
+    margin: 0.25rem 0;
+    border-left: 3px solid #ef4444;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.8rem;
+    border-radius: 0.25rem;
+    font-style: italic;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  &[contenteditable="false"] [data-error-block="true"] {
+    display: none;
+  }
+}
