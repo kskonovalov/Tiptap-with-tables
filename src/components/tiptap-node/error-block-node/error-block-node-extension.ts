@@ -1,4 +1,6 @@
-import { mergeAttributes, Node } from "@tiptap/core"
+import { mergeAttributes, Node } from "@tiptap/react"
+import { ReactNodeViewRenderer } from "@tiptap/react"
+import { ErrorBlockNodeView } from "./error-block-node"
 
 export const ErrorBlockNode = Node.create({
   name: "errorBlock",
@@ -27,6 +29,10 @@ export const ErrorBlockNode = Node.create({
       mergeAttributes({ "data-error-block": "true" }, HTMLAttributes),
       HTMLAttributes["data-message"] || "Unknown error",
     ]
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ErrorBlockNodeView)
   },
 })
 

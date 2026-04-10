@@ -88,13 +88,6 @@ import {
  * @param editorjsData - EditorJS data object
  * @returns TipTap document
  */
-/** Returns an errorBlock node when a converter throws. */
-function errorBlock(block: EditorJSBlock, err: unknown): TipTapNode {
-  const message = err instanceof Error ? err.message : String(err);
-  console.error(`Migration failed for block type "${block.type}":`, err);
-  return { type: "errorBlock", attrs: { message: `[${block.type}] ${message}` } };
-}
-
 /** Internal: converts a flat EditorJS blocks array to TipTap nodes. */
 function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
   const content: TipTapNode[] = [];
@@ -105,51 +98,36 @@ function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
     if (block.type === "Toggle") {
       const count = block.data.items ?? 0;
       const contentBlocks = blocks.slice(i + 1, i + 1 + count);
-      try { content.push(editorjsToggleToTiptap(block, contentBlocks)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsToggleToTiptap(block, contentBlocks));
       i += count;
     } else if (blockType === "paragraph" || blockType === "customparagraph") {
-      try { content.push(editorjsParagraphToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsParagraphToTiptap(block));
     } else if (blockType === "header") {
-      try { content.push(editorjsHeaderToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsHeaderToTiptap(block));
     } else if (blockType === "list") {
-      try { content.push(editorjsListToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsListToTiptap(block));
     } else if (blockType === "delimiter") {
-      try { content.push(editorjsDelimiterToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsDelimiterToTiptap(block));
     } else if (blockType === "image") {
-      try { content.push(editorjsImageToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsImageToTiptap(block));
     } else if (blockType === "table") {
-      try { content.push(editorjsTableToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsTableToTiptap(block));
     } else if (blockType === "frame") {
-      try { content.push(editorjsFrameToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsFrameToTiptap(block));
     } else if (blockType === "raw") {
-      try { content.push(editorjsRawToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsRawToTiptap(block));
     } else if (blockType === "codetool") {
-      try { content.push(editorjsCodeToolToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsCodeToolToTiptap(block));
     } else if (blockType === "attaches") {
-      try { content.push(editorjsAttachesToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsAttachesToTiptap(block));
     } else if (blockType === "quote") {
-      try { content.push(editorjsQuoteToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsQuoteToTiptap(block));
     } else if (blockType === "alert") {
-      try { content.push(editorjsAlertToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsAlertToTiptap(block));
     } else if (blockType === "warning") {
-      try { content.push(editorjsWarningToTiptap(block)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsWarningToTiptap(block));
     } else if (blockType === "columns") {
-      try { content.push(editorjsColumnsToTiptap(block, convertBlocks)); }
-      catch (err) { content.push(errorBlock(block, err)); }
+      content.push(editorjsColumnsToTiptap(block, convertBlocks));
     }
     // Add more block type handlers here as needed
     else {

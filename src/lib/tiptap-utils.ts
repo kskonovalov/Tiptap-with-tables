@@ -12,6 +12,33 @@ import {
   type Editor,
   type NodeWithPos,
 } from "@tiptap/react"
+import { getSchema } from "@tiptap/core"
+import type { Extensions, JSONContent } from "@tiptap/core"
+
+/**
+ * Validates each top-level block in a TipTap document against the ProseMirror schema.
+ * Any block that fails validation is replaced with an errorBlock placeholder node,
+ * preventing a single broken block from crashing the entire editor on load.
+ */
+export function sanitizeContent(doc: JSONContent, extensions: Extensions): JSONContent {
+  if (!doc?.content?.length) return doc
+  const schema = getSchema(extensions)
+  return {
+    ...doc,
+    content: doc.content.map((block) => {
+      try {
+        schema.nodeFromJSON(block)
+        return block
+      } catch (err) {
+        console.error("[tiptap] invalid block replaced with error placeholder:", err)
+        return {
+          type: "errorBlock",
+          attrs: { message: err instanceof Error ? err.message : String(err) },
+        }
+      }
+    }),
+  }
+}
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 

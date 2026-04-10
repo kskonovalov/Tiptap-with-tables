@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
@@ -105,7 +105,8 @@ import { useResponsiveToolbar } from "../../../hooks/use-responsive-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE, sanitizeUrl } from "../../../lib/tiptap-utils";
+import { handleImageUpload, MAX_FILE_SIZE, sanitizeUrl, sanitizeContent } from "../../../lib/tiptap-utils";
+import type { Extensions } from "@tiptap/core";
 
 // --- Styles ---
 import "./simple-editor.scss";
@@ -479,6 +480,83 @@ export function SimpleEditor() {
   );
   const toolbarRef = useRef<HTMLDivElement>(null);
 
+  const extensions = useMemo<Extensions>(() => [
+    StarterKit.configure({
+      horizontalRule: false,
+      orderedList: false,
+      bulletList: false,
+      link: {
+        openOnClick: false,
+        enableClickSelection: true,
+      },
+    }),
+    HorizontalRule,
+    CustomOrderedList,
+    CustomBulletList,
+    TextAlign.configure({ types: ["heading", "paragraph"] }),
+    CustomTaskList,
+    TaskItem.configure({ nested: true }),
+    Highlight.configure({ multicolor: true }),
+    Image.extend({
+      atom: true,
+      addAttributes() {
+        return {
+          ...this.parent?.(),
+          "data-align": {
+            default: null,
+            parseHTML: (element) => element.getAttribute("data-align"),
+            renderHTML: (attributes) => {
+              if (!attributes["data-align"]) return {};
+              return { "data-align": attributes["data-align"] };
+            },
+          },
+        };
+      },
+    }).configure({
+      resize: {
+        enabled: true,
+        alwaysPreserveAspectRatio: true,
+      },
+    }),
+    Typography,
+    Superscript,
+    Subscript,
+    Selection,
+    TableRowFilter,
+    TableHeader,
+    TableCell,
+    TableFilter.configure({
+      resizable: true,
+    }),
+    Details,
+    DetailsSummary,
+    DetailsContent,
+    AlertNode,
+    ErrorBlockNode,
+    WarningNode,
+    WarningTitle,
+    WarningMessage,
+    ColumnsNode,
+    ColumnItem,
+    TextStyle,
+    Color,
+    FontSize,
+    FontFamily,
+    NodeBackground,
+    ImageUploadNode.configure({
+      accept: "image/*",
+      maxSize: MAX_FILE_SIZE,
+      limit: 3,
+      upload: handleImageUpload,
+      onError: (error) => console.error("Upload failed:", error),
+    }),
+  ], []);
+
+  const safeContent = useMemo(
+    () => sanitizeContent(content, extensions),
+    [content, extensions]
+  );
+
   const editor = useEditor(
     {
       immediatelyRender: false,
@@ -563,80 +641,16 @@ export function SimpleEditor() {
           return true;
         },
       },
-      extensions: [
-        StarterKit.configure({
-          horizontalRule: false,
-          orderedList: false,
-          bulletList: false,
-          link: {
-            openOnClick: false,
-            enableClickSelection: true,
-          },
-        }),
-        HorizontalRule,
-        CustomOrderedList,
-        CustomBulletList,
-        TextAlign.configure({ types: ["heading", "paragraph"] }),
-        CustomTaskList,
-        TaskItem.configure({ nested: true }),
-        Highlight.configure({ multicolor: true }),
-        Image.extend({
-          atom: true,
-
-          addAttributes() {
-            return {
-              ...this.parent?.(),
-              "data-align": {
-                default: null,
-                parseHTML: (element) => element.getAttribute("data-align"),
-                renderHTML: (attributes) => {
-                  if (!attributes["data-align"]) return {};
-                  return { "data-align": attributes["data-align"] };
-                },
-              },
-            };
-          },
-        }).configure({
-          resize: {
-            enabled: true,
-            alwaysPreserveAspectRatio: true,
-          },
-        }),
-        Typography,
-        Superscript,
-        Subscript,
-        Selection,
-        TableRowFilter,
-        TableHeader,
-        TableCell,
-        TableFilter.configure({
-          resizable: true,
-        }),
-        Details,
-        DetailsSummary,
-        DetailsContent,
-        AlertNode,
-        ErrorBlockNode,
-        WarningNode,
-        WarningTitle,
-        WarningMessage,
-        ColumnsNode,
-        ColumnItem,
-        TextStyle,
-        Color,
-        FontSize,
-        FontFamily,
-        NodeBackground,
-        ImageUploadNode.configure({
-          accept: "image/*",
-          maxSize: MAX_FILE_SIZE,
-          limit: 3,
-          upload: handleImageUpload,
-          onError: (error) => console.error("Upload failed:", error),
-        }),
-      ],
-      content,
+      extensions,
+      content: safeContent,
       editable: !readonly,
+      dispatchTransaction({ transaction, next }) {
+        try {
+          next(transaction);
+        } catch (err) {
+          console.error("[tiptap] transaction error, reverting:", err);
+        }
+      },
     },
     [readonly],
   );
