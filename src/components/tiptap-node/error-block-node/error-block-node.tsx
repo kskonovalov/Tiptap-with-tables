@@ -2,11 +2,18 @@
 
 import type { NodeViewProps } from "@tiptap/react"
 import { NodeViewWrapper } from "@tiptap/react"
+import { Button } from "../../tiptap-ui-primitive/button/index"
 import { ERROR_MESSAGES } from "../../../lib/error-messages"
 
-export function ErrorBlockNodeView({ node, editor }: NodeViewProps) {
+export function ErrorBlockNodeView({ node, editor, getPos }: NodeViewProps) {
   if (!editor.isEditable) {
     return null
+  }
+
+  const handleRemove = () => {
+    const pos = getPos()
+    if (pos === undefined) return
+    editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run()
   }
 
   return (
@@ -14,7 +21,8 @@ export function ErrorBlockNodeView({ node, editor }: NodeViewProps) {
       data-error-block="true"
       contentEditable={false}
     >
-      {ERROR_MESSAGES.PREFIX}{node.attrs.message || ERROR_MESSAGES.UNKNOWN}
+      <span>{ERROR_MESSAGES.PREFIX}{node.attrs.message || ERROR_MESSAGES.UNKNOWN}</span>
+      <Button onClick={handleRemove}>Удалить блок</Button>
     </NodeViewWrapper>
   )
 }
