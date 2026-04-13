@@ -1,4 +1,5 @@
 export const ERROR_MESSAGES = {
+  PREFIX:                  "ОШИБКА В БЛОКЕ: ",
   UNKNOWN:                 "Не удалось загрузить блок",
   INVALID_NODE_INPUT:      "Блок повреждён и не может быть отображён",
   INVALID_MARK_DATA:       "Форматирование блока повреждено",

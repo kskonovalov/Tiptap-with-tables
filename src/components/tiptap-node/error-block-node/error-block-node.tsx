@@ -14,7 +14,7 @@ export function ErrorBlockNodeView({ node, editor }: NodeViewProps) {
       data-error-block="true"
       contentEditable={false}
     >
-      {node.attrs.message || ERROR_MESSAGES.UNKNOWN}
+      {ERROR_MESSAGES.PREFIX}{node.attrs.message || ERROR_MESSAGES.UNKNOWN}
     </NodeViewWrapper>
   )
 }
