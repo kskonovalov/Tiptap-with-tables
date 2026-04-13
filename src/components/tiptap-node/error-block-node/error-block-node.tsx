@@ -2,6 +2,7 @@
 
 import type { NodeViewProps } from "@tiptap/react"
 import { NodeViewWrapper } from "@tiptap/react"
+import { ERROR_MESSAGES } from "../../../lib/error-messages"
 
 export function ErrorBlockNodeView({ node, editor }: NodeViewProps) {
   if (!editor.isEditable) {
@@ -13,7 +14,7 @@ export function ErrorBlockNodeView({ node, editor }: NodeViewProps) {
       data-error-block="true"
       contentEditable={false}
     >
-      {node.attrs.message || "Unknown error"}
+      {node.attrs.message || ERROR_MESSAGES.UNKNOWN}
     </NodeViewWrapper>
   )
 }

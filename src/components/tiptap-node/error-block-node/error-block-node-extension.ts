@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/react"
 import { ReactNodeViewRenderer } from "@tiptap/react"
+import { ERROR_MESSAGES } from "../../../lib/error-messages"
 import { ErrorBlockNodeView } from "./error-block-node"
 
 export const ErrorBlockNode = Node.create({
@@ -12,8 +13,8 @@ export const ErrorBlockNode = Node.create({
   addAttributes() {
     return {
       message: {
-        default: "Unknown error",
-        parseHTML: (element) => element.getAttribute("data-message") || "Unknown error",
+        default: ERROR_MESSAGES.UNKNOWN,
+        parseHTML: (element) => element.getAttribute("data-message") || ERROR_MESSAGES.UNKNOWN,
         renderHTML: (attributes) => ({ "data-message": attributes.message }),
       },
     }
@@ -26,8 +27,8 @@ export const ErrorBlockNode = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes({ "data-error-block": "true" }, HTMLAttributes),
-      HTMLAttributes["data-message"] || "Unknown error",
+      mergeAttributes({ "data-error-block": "true", class: "errorBlock" }, HTMLAttributes),
+      HTMLAttributes["data-message"] || ERROR_MESSAGES.UNKNOWN,
     ]
   },
 

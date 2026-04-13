@@ -1,3 +1,4 @@
+import { translateError } from "./error-messages"
 import type { Node as PMNode } from "@tiptap/pm/model"
 import type { Transaction } from "@tiptap/pm/state"
 import {
@@ -33,7 +34,7 @@ export function sanitizeContent(doc: JSONContent, extensions: Extensions): JSONC
         console.error("[tiptap] invalid block replaced with error placeholder:", err)
         return {
           type: "errorBlock",
-          attrs: { message: err instanceof Error ? err.message : String(err) },
+          attrs: { message: translateError(err) },
         }
       }
     }),
