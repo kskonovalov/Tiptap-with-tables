@@ -1,16 +1,17 @@
-import type { EditorJSBlock, TipTapNode, TipTapParagraphNode } from '../types';
+import type { EditorJSBlock, TipTapNode } from '../types';
 import { parseHTMLToTipTapNodes, convertTipTapNodesToHTML } from '../html-parser';
 import { generateBlockId } from '../utils';
-import { editorjsParagraphToTiptap, tiptapParagraphToEditorjs } from './paragraph';
 
 /**
  * Converts EditorJS Toggle block to TipTap details node.
  * data.text becomes the detailsSummary; contentBlocks (the next data.items
- * blocks from the flat EditorJS array) become paragraphs inside detailsContent.
+ * blocks from the flat EditorJS array) become the content inside detailsContent.
+ * Supports any block type via the injected convertBlocks dispatcher.
  */
 export function editorjsToggleToTiptap(
   block: EditorJSBlock,
   contentBlocks: EditorJSBlock[] = [],
+  convertBlocks: (blocks: EditorJSBlock[]) => TipTapNode[],
 ): TipTapNode {
   const { text = '', status = 'closed' } = block.data;
 
@@ -21,18 +22,11 @@ export function editorjsToggleToTiptap(
     content: summaryContent.length > 0 ? summaryContent : [],
   };
 
-  const contentNodes: TipTapParagraphNode[] = contentBlocks.map((b) => {
-    const bt = b.type.toLowerCase();
-    if (bt === 'paragraph' || bt === 'customparagraph') {
-      return editorjsParagraphToTiptap(b);
-    }
-    // Fallback: empty paragraph for unrecognised block types
-    return { type: 'paragraph', attrs: { textAlign: null } };
-  });
+  const contentNodes = convertBlocks(contentBlocks);
 
   const detailsContent: TipTapNode = {
     type: 'detailsContent',
-    content: contentNodes,
+    content: contentNodes.length > 0 ? contentNodes : [{ type: 'paragraph' }],
   };
 
   return {
@@ -46,32 +40,31 @@ export function editorjsToggleToTiptap(
 
 /**
  * Converts TipTap details node to an EditorJS Toggle block followed by its
- * content as flat paragraph blocks (matching the EditorJS flat-array format).
+ * content as flat EditorJS blocks (matching the EditorJS flat-array format).
+ * Supports any node type via the injected convertNodes dispatcher.
  */
-export function tiptapDetailsToEditorjs(node: TipTapNode): EditorJSBlock[] {
-  const summary = node.content?.find((n) => n.type === 'detailsSummary');
-  const detailsContent = node.content?.find((n) => n.type === 'detailsContent');
+export function tiptapDetailsToEditorjs(
+  node: TipTapNode,
+  convertNodes: (nodes: TipTapNode[]) => EditorJSBlock[],
+): EditorJSBlock[] {
+  const summary = node.content?.find((n) => n.type === 'detailsSummary') as TipTapNode | undefined;
+  const detailsContent = node.content?.find((n) => n.type === 'detailsContent') as TipTapNode | undefined;
 
   const text = summary ? convertTipTapNodesToHTML(summary.content || []) : '';
 
-  const contentParagraphs = (detailsContent?.content ?? []).filter(
-    (n): n is TipTapParagraphNode => n.type === 'paragraph',
-  );
+  const innerNodes = (detailsContent?.content ?? []) as TipTapNode[];
+  const contentBlocks = convertNodes(innerNodes);
 
   const toggleBlock: EditorJSBlock = {
     id: generateBlockId(),
     type: 'Toggle',
     data: {
       fk: '',
-      items: contentParagraphs.length,
+      items: contentBlocks.length,
       status: node.attrs?.open ? 'open' : 'closed',
       text,
     },
   };
-
-  const contentBlocks = contentParagraphs.map((p) =>
-    tiptapParagraphToEditorjs(p, 'paragraph'),
-  );
 
   return [toggleBlock, ...contentBlocks];
 }

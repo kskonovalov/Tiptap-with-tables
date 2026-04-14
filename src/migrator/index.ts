@@ -98,7 +98,7 @@ function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
     if (block.type === "Toggle") {
       const count = block.data.items ?? 0;
       const contentBlocks = blocks.slice(i + 1, i + 1 + count);
-      content.push(editorjsToggleToTiptap(block, contentBlocks));
+      content.push(editorjsToggleToTiptap(block, contentBlocks, convertBlocks));
       i += count;
     } else if (blockType === "paragraph" || blockType === "customparagraph") {
       content.push(editorjsParagraphToTiptap(block));
@@ -205,7 +205,7 @@ function convertNodes(
     } else if (node.type === "blockquote") {
       blocks.push(tiptapBlockquoteToEditorjs(node));
     } else if (node.type === "details") {
-      blocks.push(...tiptapDetailsToEditorjs(node));
+      blocks.push(...tiptapDetailsToEditorjs(node, (inner) => convertNodes(inner, paragraphBlockType)));
     } else if (node.type === "alert") {
       blocks.push(tiptapAlertToEditorjs(node));
     } else if (node.type === "warning") {
