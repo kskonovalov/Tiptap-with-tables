@@ -32,10 +32,10 @@ export function editorjsWarningToTiptap(block: EditorJSBlock): TipTapNode {
  * warningMessage paragraphs are serialized to HTML as data.message.
  */
 export function tiptapWarningToEditorjs(node: TipTapNode): EditorJSBlock {
-  const titleNode = (node.content ?? []).find((n) => n.type === 'warningTitle');
-  const messageNode = (node.content ?? []).find((n) => n.type === 'warningMessage');
+  const titleNode = (node.content ?? []).find((n) => n.type === 'warningTitle') as TipTapNode | undefined;
+  const messageNode = (node.content ?? []).find((n) => n.type === 'warningMessage') as TipTapNode | undefined;
 
-  const title = convertTipTapNodesToHTML((titleNode?.content as any) || []);
+  const title = convertTipTapNodesToHTML(titleNode?.content || []);
 
   const paragraphs = (messageNode?.content ?? []).filter(
     (n): n is TipTapParagraphNode => n.type === 'paragraph',
