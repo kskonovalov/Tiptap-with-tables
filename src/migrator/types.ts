@@ -51,6 +51,7 @@ export interface TipTapDocument {
 export interface TipTapParagraphNode extends TipTapNode {
   type: 'paragraph';
   attrs?: {
+    id?: string;
     textAlign?: 'left' | 'center' | 'right' | 'justify' | null;
   };
   content?: TipTapTextNode[];
@@ -66,6 +67,7 @@ export interface EditorJSHeaderData {
 export interface TipTapHeadingNode extends TipTapNode {
   type: 'heading';
   attrs?: {
+    id?: string;
     level: 1 | 2 | 3 | 4 | 5 | 6;
     textAlign?: 'left' | 'center' | 'right' | 'justify' | null;
   };

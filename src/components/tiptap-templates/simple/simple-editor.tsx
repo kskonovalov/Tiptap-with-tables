@@ -49,6 +49,7 @@ import { Color, TextStyle } from "../../tiptap-node/color-node/index";
 import { FontSize } from "../../tiptap-node/fontsize-node/index";
 import { FontFamily } from "../../tiptap-node/fontfamily-node/index";
 import { NodeBackground } from "../../tiptap-extension/node-background-extension";
+import { UniqueID } from "../../tiptap-extension/unique-id-extension";
 import { TableFilter } from "../../tiptap-node/table-filter-node/index";
 import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index";
 import "../../tiptap-node/alert-node/alert-node.scss";
@@ -543,6 +544,16 @@ export function SimpleEditor() {
     FontSize,
     FontFamily,
     NodeBackground,
+    UniqueID.configure({
+      types: [
+        "paragraph", "heading",
+        "bulletList", "orderedList", "taskList",
+        "horizontalRule", "image", "table", "codeBlock",
+        "blockquote", "details", "alert", "warning", "columns",
+        "video", "file",
+      ],
+      generateID: () => crypto.randomUUID(),
+    }),
     ImageUploadNode.configure({
       accept: "image/*",
       maxSize: MAX_FILE_SIZE,

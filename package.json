@@ -28,6 +28,7 @@
     "@tiptap/extension-table-row": "^3.13.0",
     "@tiptap/extension-text-align": "^3.13.0",
     "@tiptap/extension-typography": "^3.13.0",
+    "@tiptap/extension-unique-id": "^3.23.1",
     "@tiptap/extensions": "^3.13.0",
     "@tiptap/pm": "^3.13.0",
     "@tiptap/react": "^3.13.0",

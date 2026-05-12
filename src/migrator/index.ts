@@ -88,6 +88,17 @@ import {
  * @param editorjsData - EditorJS data object
  * @returns TipTap document
  */
+function injectBlockId(node: TipTapNode, blockId: string | undefined): TipTapNode {
+  if (!blockId) return node
+  return { ...node, attrs: { ...node.attrs, id: blockId } }
+}
+
+function preserveBlockId(ejsBlock: EditorJSBlock, tiptapNode: TipTapNode): EditorJSBlock {
+  const storedId = tiptapNode.attrs?.id
+  if (!storedId || typeof storedId !== 'string') return ejsBlock
+  return { ...ejsBlock, id: storedId }
+}
+
 /** Internal: converts a flat EditorJS blocks array to TipTap nodes. */
 function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
   const content: TipTapNode[] = [];
@@ -98,36 +109,36 @@ function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
     if (block.type === "Toggle") {
       const count = block.data.items ?? 0;
       const contentBlocks = blocks.slice(i + 1, i + 1 + count);
-      content.push(editorjsToggleToTiptap(block, contentBlocks, convertBlocks));
+      content.push(injectBlockId(editorjsToggleToTiptap(block, contentBlocks, convertBlocks), block.id));
       i += count;
     } else if (blockType === "paragraph" || blockType === "customparagraph") {
-      content.push(editorjsParagraphToTiptap(block));
+      content.push(injectBlockId(editorjsParagraphToTiptap(block), block.id));
     } else if (blockType === "header") {
-      content.push(editorjsHeaderToTiptap(block));
+      content.push(injectBlockId(editorjsHeaderToTiptap(block), block.id));
     } else if (blockType === "list") {
-      content.push(editorjsListToTiptap(block));
+      content.push(injectBlockId(editorjsListToTiptap(block), block.id));
     } else if (blockType === "delimiter") {
-      content.push(editorjsDelimiterToTiptap(block));
+      content.push(injectBlockId(editorjsDelimiterToTiptap(block), block.id));
     } else if (blockType === "image") {
-      content.push(editorjsImageToTiptap(block));
+      content.push(injectBlockId(editorjsImageToTiptap(block), block.id));
     } else if (blockType === "table") {
-      content.push(editorjsTableToTiptap(block));
+      content.push(injectBlockId(editorjsTableToTiptap(block), block.id));
     } else if (blockType === "frame") {
-      content.push(editorjsFrameToTiptap(block));
+      content.push(injectBlockId(editorjsFrameToTiptap(block), block.id));
     } else if (blockType === "raw") {
-      content.push(editorjsRawToTiptap(block));
+      content.push(injectBlockId(editorjsRawToTiptap(block), block.id));
     } else if (blockType === "codetool") {
-      content.push(editorjsCodeToolToTiptap(block));
+      content.push(injectBlockId(editorjsCodeToolToTiptap(block), block.id));
     } else if (blockType === "attaches") {
-      content.push(editorjsAttachesToTiptap(block));
+      content.push(injectBlockId(editorjsAttachesToTiptap(block), block.id));
     } else if (blockType === "quote") {
-      content.push(editorjsQuoteToTiptap(block));
+      content.push(injectBlockId(editorjsQuoteToTiptap(block), block.id));
     } else if (blockType === "alert") {
-      content.push(editorjsAlertToTiptap(block));
+      content.push(injectBlockId(editorjsAlertToTiptap(block), block.id));
     } else if (blockType === "warning") {
-      content.push(editorjsWarningToTiptap(block));
+      content.push(injectBlockId(editorjsWarningToTiptap(block), block.id));
     } else if (blockType === "columns") {
-      content.push(editorjsColumnsToTiptap(block, convertBlocks));
+      content.push(injectBlockId(editorjsColumnsToTiptap(block, convertBlocks), block.id));
     }
     // Add more block type handlers here as needed
     else {
@@ -181,37 +192,39 @@ function convertNodes(
 
   for (const node of nodes) {
     if (node.type === "paragraph") {
-      blocks.push(tiptapParagraphToEditorjs(node, paragraphBlockType));
+      blocks.push(preserveBlockId(tiptapParagraphToEditorjs(node, paragraphBlockType), node));
     } else if (node.type === "heading") {
-      blocks.push(tiptapHeadingToEditorjs(node as any));
+      blocks.push(preserveBlockId(tiptapHeadingToEditorjs(node as any), node));
     } else if (
       node.type === "bulletList" ||
       node.type === "orderedList" ||
       node.type === "taskList"
     ) {
-      blocks.push(tiptapListToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapListToEditorjs(node), node));
     } else if (node.type === "horizontalRule") {
-      blocks.push(tiptapHorizontalRuleToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapHorizontalRuleToEditorjs(node), node));
     } else if (node.type === "image") {
-      blocks.push(tiptapImageToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapImageToEditorjs(node), node));
     } else if (node.type === "table") {
-      blocks.push(tiptapTableToEditorjs(node as any));
+      blocks.push(preserveBlockId(tiptapTableToEditorjs(node as any), node));
     } else if (node.type === "video") {
-      blocks.push(tiptapVideoToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapVideoToEditorjs(node), node));
     } else if (node.type === "codeBlock") {
-      blocks.push(tiptapCodeBlockToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapCodeBlockToEditorjs(node), node));
     } else if (node.type === "file") {
-      blocks.push(tiptapFileToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapFileToEditorjs(node), node));
     } else if (node.type === "blockquote") {
-      blocks.push(tiptapBlockquoteToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapBlockquoteToEditorjs(node), node));
     } else if (node.type === "details") {
-      blocks.push(...tiptapDetailsToEditorjs(node, (inner) => convertNodes(inner, paragraphBlockType)));
+      const detailsBlocks = tiptapDetailsToEditorjs(node, (inner) => convertNodes(inner, paragraphBlockType));
+      if (detailsBlocks.length > 0) detailsBlocks[0] = preserveBlockId(detailsBlocks[0], node);
+      blocks.push(...detailsBlocks);
     } else if (node.type === "alert") {
-      blocks.push(tiptapAlertToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapAlertToEditorjs(node), node));
     } else if (node.type === "warning") {
-      blocks.push(tiptapWarningToEditorjs(node));
+      blocks.push(preserveBlockId(tiptapWarningToEditorjs(node), node));
     } else if (node.type === "columns") {
-      blocks.push(tiptapColumnsToEditorjs(node, (inner) => convertNodes(inner, paragraphBlockType)));
+      blocks.push(preserveBlockId(tiptapColumnsToEditorjs(node, (inner) => convertNodes(inner, paragraphBlockType)), node));
     }
     // Add more node type handlers here as needed
     else {
