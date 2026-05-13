@@ -168,17 +168,17 @@ export function editorjsTableToTiptap(block: EditorJSBlock): TipTapTableNode {
   }
 
   if (rows.length === 0) {
-    rows.push({
-      type: 'tableRow',
-      attrs: { hidden: false },
-      content: [
-        {
-          type: 'tableCell',
+    for (let r = 0; r < 3; r++) {
+      rows.push({
+        type: 'tableRow',
+        attrs: { hidden: false },
+        content: Array.from({ length: 3 }, () => ({
+          type: 'tableCell' as const,
           attrs: {},
           content: [cellToParagraph('')],
-        } as TipTapTableCellNode,
-      ],
-    });
+        })),
+      });
+    }
   }
 
   const attrs: TipTapTableNode['attrs'] = {
