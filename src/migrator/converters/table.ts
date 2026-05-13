@@ -167,6 +167,20 @@ export function editorjsTableToTiptap(block: EditorJSBlock): TipTapTableNode {
     rows.push(row);
   }
 
+  if (rows.length === 0) {
+    rows.push({
+      type: 'tableRow',
+      attrs: { hidden: false },
+      content: [
+        {
+          type: 'tableCell',
+          attrs: {},
+          content: [cellToParagraph('')],
+        } as TipTapTableCellNode,
+      ],
+    });
+  }
+
   const attrs: TipTapTableNode['attrs'] = {
     fullWidth: true,
   };
