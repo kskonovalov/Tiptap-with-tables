@@ -50,6 +50,7 @@ import { FontSize } from "../../tiptap-node/fontsize-node/index";
 import { FontFamily } from "../../tiptap-node/fontfamily-node/index";
 import { NodeBackground } from "../../tiptap-extension/node-background-extension";
 import { UniqueID } from "../../tiptap-extension/unique-id-extension";
+import { FormatPainter } from "../../tiptap-extension/format-painter/format-painter-extension";
 import { TableFilter } from "../../tiptap-node/table-filter-node/index";
 import { TableRowFilter } from "../../tiptap-node/table-row-filter-node/index";
 import "../../tiptap-node/alert-node/alert-node.scss";
@@ -90,6 +91,7 @@ import {
 import { MarkButton } from "../../tiptap-ui/mark-button/index";
 import { TextAlignButton } from "../../tiptap-ui/text-align-button/index";
 import { UndoRedoButton } from "../../tiptap-ui/undo-redo-button/index";
+import { FormatPainterButton, ApplyFormatButton } from "../../tiptap-ui/format-painter/index";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "../../tiptap-icons/arrow-left-icon";
@@ -340,6 +342,14 @@ const MainToolbarContent = ({
       estimatedWidth: 32,
     },
     {
+      element: <FormatPainterButton key="format-painter" />,
+      estimatedWidth: 32,
+    },
+    {
+      element: <ApplyFormatButton key="apply-format" />,
+      estimatedWidth: 32,
+    },
+    {
       element: <ColorDropdownMenu key="color" portal={isMobile} />,
       estimatedWidth: 50,
     },
@@ -544,6 +554,7 @@ export function SimpleEditor() {
     FontSize,
     FontFamily,
     NodeBackground,
+    FormatPainter,
     UniqueID.configure({
       types: [
         "paragraph", "heading",
