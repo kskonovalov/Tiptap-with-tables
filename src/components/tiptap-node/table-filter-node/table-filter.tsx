@@ -108,7 +108,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
             let cellIndex = 0;
             rowNode.forEach((cellNode) => {
               if (cellIndex === colIndex) {
-                const text = cellNode.textContent.trim();
+                const text = cellNode.textBetween(0, cellNode.content.size, " ").trim();
                 values.add(text || "");
               }
               cellIndex++;
@@ -267,7 +267,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
           let text = "";
           let i = 0;
           row.forEach((cell) => {
-            if (i === effectiveSort.col) text = cell.textContent.trim();
+            if (i === effectiveSort.col) text = cell.textBetween(0, cell.content.size, " ").trim();
             i++;
           });
           return text;
@@ -367,10 +367,10 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
       const sorted = [...sourceRows].sort((a, b) => {
         const aCells = a.querySelectorAll("td, th");
         const bCells = b.querySelectorAll("td, th");
-        const aText = (aCells[effectiveSort.col] as HTMLElement | undefined)
-          ?.textContent?.trim() ?? "";
-        const bText = (bCells[effectiveSort.col] as HTMLElement | undefined)
-          ?.textContent?.trim() ?? "";
+        const aCell = aCells[effectiveSort.col] as HTMLElement | undefined;
+        const bCell = bCells[effectiveSort.col] as HTMLElement | undefined;
+        const aText = aCell ? aCell.innerText.replace(/\n+/g, " ").trim() : "";
+        const bText = bCell ? bCell.innerText.replace(/\n+/g, " ").trim() : "";
         const cmp = aText.localeCompare(bText, undefined, {
           numeric: true,
           sensitivity: "base",
@@ -413,7 +413,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
             let cellIndex = 0;
             rowNode.forEach((cellNode) => {
               if (cellNode.type.name === "tableCell") {
-                const cellText = cellNode.textContent.trim();
+                const cellText = cellNode.textBetween(0, cellNode.content.size, " ").trim();
                 const filters = effectiveFilters.get(cellIndex);
 
                 if (filters) {
@@ -481,7 +481,7 @@ export const TableFilterComponent: React.FC<NodeViewProps> = ({
             const cell = cells[colIndex] as HTMLElement;
             if (!cell) return;
 
-            const cellText = cell.textContent?.trim() || "";
+            const cellText = cell.innerText.replace(/\n+/g, " ").trim();
             const filterOption = filters.find((f) => f.value === cellText);
 
             if (filterOption && !filterOption.checked) {
