@@ -55,7 +55,7 @@ export function tiptapBlockquoteToEditorjs(node: TipTapNode): EditorJSBlock {
     ? convertTipTapNodesToHTML(captionParagraph.content || [])
     : '';
 
-  const alignment = paragraphs[0]?.attrs?.textAlign ?? 'left';
+  const alignment = paragraphs[0]?.attrs?.textAlign ?? null;
 
   return {
     id: generateBlockId(),

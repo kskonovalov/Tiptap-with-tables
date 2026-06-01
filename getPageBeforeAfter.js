@@ -28,11 +28,12 @@ const normalizeTipTap = (nodes) =>
   nodes
     .filter((n) => n.type === "paragraph" || n.type === "table")
     .map((node, i) => {
+      const stableId = node.attrs?.id || String(i);
       if (node.type === "paragraph") {
-        return { id: String(i), type: "customParagraph", data: { text: tipTapInlineToHTML(node) } };
+        return { id: stableId, type: "customParagraph", data: { text: tipTapInlineToHTML(node) } };
       }
       return {
-        id: String(i),
+        id: stableId,
         type: "Table",
         data: {
           content: (node.content ?? []).map((row) =>

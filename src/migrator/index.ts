@@ -106,7 +106,7 @@ function convertBlocks(blocks: EditorJSBlock[]): TipTapNode[] {
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     const blockType = block.type.toLowerCase();
-    if (block.type === "Toggle") {
+    if (blockType === "toggle") {
       const count = block.data.items ?? 0;
       const contentBlocks = blocks.slice(i + 1, i + 1 + count);
       content.push(injectBlockId(editorjsToggleToTiptap(block, contentBlocks, convertBlocks), block.id));
@@ -245,7 +245,7 @@ export function tiptapToEditorjs(
 
   return {
     time: Date.now(),
-    blocks: convertNodes(tiptapDoc.content, paragraphBlockType),
+    blocks: convertNodes(tiptapDoc.content ?? [], paragraphBlockType),
     version: "2.28.0",
   };
 }

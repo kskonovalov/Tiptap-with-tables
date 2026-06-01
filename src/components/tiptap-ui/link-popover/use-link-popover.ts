@@ -31,6 +31,10 @@ export interface UseLinkPopoverConfig {
    * Callback function called when the link is set.
    */
   onSetLink?: () => void
+  /**
+   * Whether the popover is currently open — prevents URL reset on cursor move.
+   */
+  isOpen?: boolean
 }
 
 /**
@@ -45,6 +49,10 @@ export interface LinkHandlerProps {
    * Callback function called when the link is set.
    */
   onSetLink?: () => void
+  /**
+   * Whether the link popover is currently open — prevents URL reset on cursor move.
+   */
+  isOpen?: boolean
 }
 
 /**
@@ -93,7 +101,7 @@ export function shouldShowLinkButton(props: {
  * Custom hook for handling link operations in a Tiptap editor
  */
 export function useLinkHandler(props: LinkHandlerProps) {
-  const { editor, onSetLink } = props
+  const { editor, onSetLink, isOpen = false } = props
   const [url, setUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -111,15 +119,17 @@ export function useLinkHandler(props: LinkHandlerProps) {
     if (!editor) return
 
     const updateLinkState = () => {
-      const { href } = editor.getAttributes("link")
-      setUrl(href || "")
+      if (!isOpen) {
+        const { href } = editor.getAttributes("link")
+        setUrl(href || "")
+      }
     }
 
     editor.on("selectionUpdate", updateLinkState)
     return () => {
       editor.off("selectionUpdate", updateLinkState)
     }
-  }, [editor])
+  }, [editor, isOpen])
 
   const setLink = useCallback(() => {
     if (!url || !editor) return
@@ -129,7 +139,7 @@ export function useLinkHandler(props: LinkHandlerProps) {
 
     let chain = editor.chain().focus()
 
-    chain = chain.extendMarkRange("link").setLink({ href: url })
+    chain = chain.extendMarkRange("link").setLink({ href: sanitizeUrl(url, window.location.href) })
 
     if (isEmpty) {
       chain = chain.insertContent({ type: "text", text: url })
@@ -259,6 +269,7 @@ export function useLinkPopover(config?: UseLinkPopoverConfig) {
     editor: providedEditor,
     hideWhenUnavailable = false,
     onSetLink,
+    isOpen,
   } = config || {}
 
   const { editor } = useTiptapEditor(providedEditor)
@@ -271,6 +282,7 @@ export function useLinkPopover(config?: UseLinkPopoverConfig) {
   const linkHandler = useLinkHandler({
     editor,
     onSetLink,
+    isOpen,
   })
 
   return {

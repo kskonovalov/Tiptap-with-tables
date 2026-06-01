@@ -283,6 +283,14 @@ function parseHTMLSimple(html: string): (TipTapNode | TipTapTextNode)[] {
     if (!isClosing) {
       const mark = tagToMark(tagName, attrs);
       if (mark) markStack.push(mark);
+    } else if (tagName.toLowerCase() === 'a') {
+      // </a> has no href in attrs, so tagToMark returns null — remove by type directly
+      for (let i = markStack.length - 1; i >= 0; i--) {
+        if (markStack[i].type === 'link') {
+          markStack.splice(i, 1);
+          break;
+        }
+      }
     } else {
       const closingMark = tagToMark(tagName, attrs) || tagToMark(tagName, '');
       if (closingMark) removeMatchingMark(closingMark);

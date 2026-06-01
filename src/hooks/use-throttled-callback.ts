@@ -1,7 +1,7 @@
 import throttle from "lodash.throttle"
 
 import { useUnmount } from "./use-unmount"
-import { useMemo } from "react"
+import { useCallback, useMemo, useRef } from "react"
 
 interface ThrottleSettings {
   leading?: boolean | undefined
@@ -32,8 +32,16 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
   cancel: () => void
   flush: () => void
 } {
+  const fnRef = useRef(fn)
+  fnRef.current = fn
+
+  const stableFn = useCallback(
+    (...args: Parameters<T>) => fnRef.current(...args),
+    []
+  ) as T
+
   const handler = useMemo(
-    () => throttle<T>(fn, wait, options),
+    () => throttle<T>(stableFn, wait, options),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     dependencies
   )

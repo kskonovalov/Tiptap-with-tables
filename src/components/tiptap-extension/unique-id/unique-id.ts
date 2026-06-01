@@ -90,6 +90,7 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
   addStorage() {
     return {
       needsInitialIdGeneration: false,
+      _providerSyncedCleanup: null as (() => void) | null,
     }
   },
 
@@ -164,6 +165,8 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
     if (collaboration) {
       if (provider) {
         provider.on('synced', createIds)
+        // Store cleanup ref so onDestroy can remove the listener if synced never fires
+        this.storage._providerSyncedCleanup = () => provider.off('synced', createIds)
       }
       // When collaboration is present but no provider is in extension options,
       // needsInitialIdGeneration was already set in addProseMirrorPlugins
@@ -171,6 +174,13 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
       // y-sync$ transaction can arrive).
     } else {
       return createIds()
+    }
+  },
+
+  onDestroy() {
+    if (typeof this.storage._providerSyncedCleanup === 'function') {
+      this.storage._providerSyncedCleanup()
+      this.storage._providerSyncedCleanup = null
     }
   },
 
@@ -267,14 +277,15 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
           // get changed ranges based on the old state
           const changes = getChangedRanges(transform)
 
-          changes.forEach(({ newRange }) => {
+          for (const { newRange } of changes) {
             const newNodes = findChildrenInRange(newState.doc, newRange, node => {
               return types.includes(node.type.name)
             })
 
             const newIds = newNodes.map(({ node }) => node.attrs[attributeName]).filter(id => id !== null)
 
-            newNodes.forEach(({ node, pos }, i) => {
+            for (let i = 0; i < newNodes.length; i++) {
+              const { node, pos } = newNodes[i]
               // instead of checking `node.attrs[attributeName]` directly
               // we look at the current state of the node within `tr.doc`.
               // this helps to prevent adding new ids to the same node
@@ -287,7 +298,7 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
                   [attributeName]: generateID({ node, pos }),
                 })
 
-                return
+                continue
               }
 
               const nextNode = newNodes[i + 1]
@@ -295,7 +306,7 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
               if (nextNode && node.content.size === 0) {
                 const nextNodeInTr = tr.doc.nodeAt(nextNode.pos)
                 if (nextNodeInTr?.attrs[attributeName] && nextNodeInTr.attrs[attributeName] !== id) {
-                  return
+                  continue
                 }
 
                 tr.setNodeMarkup(nextNode.pos, undefined, {
@@ -312,7 +323,8 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
                 })
                 newIds[i] = generatedId
 
-                return tr
+                // split handled — skip duplicate check for this node
+                continue
               }
 
               const duplicatedNewIds = findDuplicates(newIds)
@@ -328,8 +340,8 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
                   [attributeName]: generateID({ node, pos }),
                 })
               }
-            })
-          })
+            }
+          }
 
           if (!tr.steps.length) {
             return

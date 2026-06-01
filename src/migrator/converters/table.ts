@@ -57,12 +57,12 @@ function stripHTML(html: string): string {
 }
 
 /**
- * Collects all unique plain-text values for a column from data rows
- * (always skips the first row, which is always treated as the header)
+ * Collects all unique plain-text values for a column from data rows.
+ * Skips the first row only when withHeadings is true.
  */
-function collectColumnValues(content: string[][], colIndex: number): string[] {
+function collectColumnValues(content: string[][], colIndex: number, withHeadings = true): string[] {
   const values = new Set<string>();
-  for (let rowIdx = 1; rowIdx < content.length; rowIdx++) {
+  for (let rowIdx = withHeadings ? 1 : 0; rowIdx < content.length; rowIdx++) {
     const cell = content[rowIdx][colIndex];
     if (cell !== undefined) {
       values.add(stripHTML(cell));
@@ -117,7 +117,7 @@ export function editorjsTableToTiptap(block: EditorJSBlock): TipTapTableNode {
     for (const colKey of Object.keys(data.filters)) {
       const colIndex = parseInt(colKey, 10);
       const visibleValues = data.filters[colKey].map((v) => (v === '(Пустое)' ? '' : v));
-      const allValues = collectColumnValues(data.content, colIndex);
+      const allValues = collectColumnValues(data.content, colIndex, data.withHeadings);
       const hiddenValues = invertFilter(allValues, visibleValues);
       if (hiddenValues.length > 0) {
         tiptapFilters[colKey] = hiddenValues;

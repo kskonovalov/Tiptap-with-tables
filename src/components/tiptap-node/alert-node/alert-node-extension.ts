@@ -76,13 +76,13 @@ export const AlertNode = Node.create<AlertNodeOptions>({
     ]
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ node, HTMLAttributes }) {
     return [
       "div",
       mergeAttributes(
         {
           "data-alert": "true",
-          class: `alert alert-${HTMLAttributes.type}`,
+          class: `alert alert-${node.attrs.type}`,
         },
         this.options.HTMLAttributes,
         HTMLAttributes

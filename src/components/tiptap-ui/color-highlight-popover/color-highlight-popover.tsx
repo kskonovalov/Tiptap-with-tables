@@ -107,12 +107,15 @@ export function ColorHighlightPopoverContent({
     items: menuItems,
     orientation: "both",
     onSelect: (item) => {
+      if (item.value === "none") {
+        handleRemoveHighlight()
+        return true
+      }
       if (!containerRef.current) return false
       const highlightedElement = containerRef.current.querySelector(
         '[data-highlighted="true"]'
       ) as HTMLElement
       if (highlightedElement) highlightedElement.click()
-      if (item.value === "none") handleRemoveHighlight()
       return true
     },
     autoSelectFirstItem: false,

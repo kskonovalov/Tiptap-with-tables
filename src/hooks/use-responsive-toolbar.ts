@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import type { RefObject } from "react"
 
 export interface ToolbarItem {
@@ -53,38 +53,37 @@ export function useResponsiveToolbar({
     }
   }, [containerRef])
 
-  // Вычисляем видимые и скрытые элементы
-  const visibleItems: ToolbarItem[] = []
-  const hiddenItems: ToolbarItem[] = []
+  const { visibleItems, hiddenItems } = useMemo(() => {
+    const visible: ToolbarItem[] = []
+    const hidden: ToolbarItem[] = []
 
-  if (containerWidth > 0) {
-    let currentWidth = 0
+    if (containerWidth > 0) {
+      let currentWidth = 0
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      const itemWidth = item.estimatedWidth
-      
-      // Проверяем, есть ли ещё элементы после текущего
-      const hasMoreItems = i < items.length - 1
-      
-      // Если есть скрытые элементы или будут, нужно место для кнопки overflow
-      const needsOverflowSpace = hasMoreItems && (hiddenItems.length > 0 || currentWidth + itemWidth + overflowButtonWidth > containerWidth)
-      
-      const requiredSpace = needsOverflowSpace
-        ? currentWidth + itemWidth + overflowButtonWidth
-        : currentWidth + itemWidth
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        const itemWidth = item.estimatedWidth
 
-      if (requiredSpace <= containerWidth) {
-        visibleItems.push(item)
-        currentWidth += itemWidth
-      } else {
-        hiddenItems.push(item)
+        const hasMoreItems = i < items.length - 1
+        const needsOverflowSpace = hasMoreItems && (hidden.length > 0 || currentWidth + itemWidth + overflowButtonWidth > containerWidth)
+
+        const requiredSpace = needsOverflowSpace
+          ? currentWidth + itemWidth + overflowButtonWidth
+          : currentWidth + itemWidth
+
+        if (requiredSpace <= containerWidth) {
+          visible.push(item)
+          currentWidth += itemWidth
+        } else {
+          hidden.push(item)
+        }
       }
+    } else {
+      visible.push(...items)
     }
-  } else {
-    // Пока не знаем ширину, показываем всё
-    visibleItems.push(...items)
-  }
+
+    return { visibleItems: visible, hiddenItems: hidden }
+  }, [containerWidth, items, overflowButtonWidth])
 
   return {
     visibleItems,

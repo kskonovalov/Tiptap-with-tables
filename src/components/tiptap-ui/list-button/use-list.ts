@@ -230,8 +230,9 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
 
     if (editor.isActive(type)) {
       // Unwrap list
+      const itemType = type === "taskList" ? "taskItem" : "listItem"
       chain
-        .liftListItem("listItem")
+        .liftListItem(itemType)
         .lift("bulletList")
         .lift("orderedList")
         .lift("taskList")

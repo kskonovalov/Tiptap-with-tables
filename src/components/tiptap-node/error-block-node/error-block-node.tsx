@@ -6,14 +6,14 @@ import { Button } from "../../tiptap-ui-primitive/button/index"
 import { ERROR_MESSAGES } from "../../../lib/error-messages"
 
 export function ErrorBlockNodeView({ node, editor, getPos }: NodeViewProps) {
-  if (!editor.isEditable) {
-    return null
-  }
-
   const handleRemove = () => {
     const pos = getPos()
     if (pos === undefined) return
     editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run()
+  }
+
+  if (!editor.isEditable) {
+    return null
   }
 
   return (

@@ -90,7 +90,7 @@ export function tiptapParagraphToEditorjs(
 
   // Map alignment values
   let alignment: 'left' | 'center' | 'right' | 'justify' | undefined;
-  if (node.attrs?.textAlign && node.attrs.textAlign !== 'left') {
+  if (node.attrs?.textAlign) {
     alignment = node.attrs.textAlign;
   }
 

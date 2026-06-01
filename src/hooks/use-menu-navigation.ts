@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 type Orientation = "horizontal" | "vertical" | "both"
 
@@ -62,6 +62,11 @@ export function useMenuNavigation<T>({
   const [selectedIndex, setSelectedIndex] = useState<number>(
     autoSelectFirstItem ? 0 : -1
   )
+
+  const selectedIndexRef = useRef(selectedIndex)
+  useEffect(() => {
+    selectedIndexRef.current = selectedIndex
+  }, [selectedIndex])
 
   useEffect(() => {
     const handleKeyboardNavigation = (event: KeyboardEvent) => {
@@ -133,8 +138,9 @@ export function useMenuNavigation<T>({
         case "Enter": {
           if (event.isComposing) return false
           event.preventDefault()
-          if (selectedIndex !== -1 && items[selectedIndex]) {
-            onSelect?.(items[selectedIndex])
+          const idx = selectedIndexRef.current
+          if (idx !== -1 && items[idx]) {
+            onSelect?.(items[idx])
           }
           return true
         }
@@ -175,7 +181,6 @@ export function useMenuNavigation<T>({
     editor,
     containerRef,
     items,
-    selectedIndex,
     onSelect,
     onClose,
     orientation,

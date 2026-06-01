@@ -44,11 +44,12 @@ export function useCursorVisibility({
       const { from } = state.selection
       const cursorCoords = view.coordsAtPos(from)
 
-      if (windowHeight < rect.height && cursorCoords) {
-        const availableSpace = windowHeight - cursorCoords.top
+      const effectiveWindowHeight = windowHeight || (typeof window !== "undefined" ? window.innerHeight : 0)
+      if (effectiveWindowHeight < rect.height && cursorCoords) {
+        const availableSpace = effectiveWindowHeight - cursorCoords.top
 
         // If the cursor is hidden behind the overlay or offscreen, scroll it into view
-        if (availableSpace < overlayHeight) {
+        if (availableSpace < overlayHeight || availableSpace <= 0) {
           const targetCursorY = Math.max(windowHeight / 2, overlayHeight)
           const currentScrollY = window.scrollY
           const cursorAbsoluteY = cursorCoords.top + currentScrollY

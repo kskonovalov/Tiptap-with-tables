@@ -86,7 +86,7 @@ export function tiptapHeadingToEditorjs(node: TipTapHeadingNode): EditorJSBlock 
   const level = node.attrs?.level || 2;
 
   let alignment: 'left' | 'center' | 'right' | 'justify' | undefined;
-  if (node.attrs?.textAlign && node.attrs.textAlign !== 'left') {
+  if (node.attrs?.textAlign) {
     alignment = node.attrs.textAlign;
   }
 

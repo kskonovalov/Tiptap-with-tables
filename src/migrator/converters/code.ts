@@ -28,7 +28,10 @@ export function editorjsCodeToolToTiptap(block: EditorJSBlock): TipTapNode {
  */
 export function tiptapCodeBlockToEditorjs(node: TipTapNode): EditorJSBlock {
   const text = (node.content ?? [])
-    .map((n) => ('text' in n ? n.text : '') ?? '')
+    .map((n) => {
+      if (n.type === 'hardBreak') return '\n';
+      return ('text' in n ? n.text : '') ?? '';
+    })
     .join('');
 
   return {

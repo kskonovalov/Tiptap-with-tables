@@ -41,9 +41,9 @@ export function tiptapAlertToEditorjs(node: TipTapNode): EditorJSBlock {
 
   const message = paragraphs
     .map((p) => convertTipTapNodesToHTML(p.content || []))
-    .join('\n');
+    .join('<br>');
 
-  const align = paragraphs[0]?.attrs?.textAlign ?? 'left';
+  const align = paragraphs[0]?.attrs?.textAlign ?? null;
 
   return {
     id: generateBlockId(),

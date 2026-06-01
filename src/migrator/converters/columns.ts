@@ -43,8 +43,9 @@ export function tiptapColumnsToEditorjs(
 ): EditorJSBlock {
   const columnItems = (node.content ?? []).filter((n) => n.type === 'columnItem');
 
+  const now = Date.now()
   const cols = columnItems.map((item) => ({
-    time: Date.now(),
+    time: now,
     blocks: convertNodes(item.content ?? []),
     version: '2.28.0',
   }));

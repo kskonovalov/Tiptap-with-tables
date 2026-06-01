@@ -150,7 +150,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
               type="button"
               onClick={setLink}
               title="Apply link"
-              disabled={!url && !isActive}
+              disabled={!url}
               data-style="ghost"
             >
               <CornerDownLeftIcon className="tiptap-button-icon" />
@@ -164,7 +164,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
               type="button"
               onClick={openLink}
               title="Open in new window"
-              disabled={!url && !isActive}
+              disabled={!url}
               data-style="ghost"
             >
               <ExternalLinkIcon className="tiptap-button-icon" />
@@ -174,7 +174,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
               type="button"
               onClick={removeLink}
               title="Remove link"
-              disabled={!url && !isActive}
+              disabled={!isActive}
               data-style="ghost"
             >
               <TrashIcon className="tiptap-button-icon" />
@@ -236,6 +236,7 @@ export const LinkPopover = forwardRef<HTMLButtonElement, LinkPopoverProps>(
       editor,
       hideWhenUnavailable,
       onSetLink,
+      isOpen,
     })
 
     const handleOnOpenChange = useCallback(
@@ -261,10 +262,10 @@ export const LinkPopover = forwardRef<HTMLButtonElement, LinkPopoverProps>(
     )
 
     useEffect(() => {
-      if (autoOpenOnLinkActive && isActive) {
+      if (autoOpenOnLinkActive && isActive && !isOpen) {
         setIsOpen(true)
       }
-    }, [autoOpenOnLinkActive, isActive])
+    }, [autoOpenOnLinkActive, isActive, isOpen])
 
     if (!isVisible) {
       return null
