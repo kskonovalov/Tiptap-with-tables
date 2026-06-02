@@ -11,6 +11,7 @@ import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 import { MarkButton } from "../mark-button"
 import { LinkPopover } from "../link-popover"
 import { CellBackgroundColorButton } from "./cell-background-color-button"
+import { ClearFormattingButton } from "./clear-formatting-button"
 import { FormatPainterButton, ApplyFormatButton } from "../format-painter/index"
 
 // --- UI Primitives ---
@@ -59,6 +60,7 @@ export function BubbleMenu({ editor: providedEditor }: BubbleMenuProps) {
         <MarkButton editor={editor} type="code" />
         <LinkPopover editor={editor} />
         <Separator />
+        <ClearFormattingButton editor={editor} />
         <FormatPainterButton editor={editor} />
         <ApplyFormatButton editor={editor} />
         {isCellSelection && (
