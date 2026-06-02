@@ -42,8 +42,8 @@ export function useFormatPainter({ editor: providedEditor }: UseFormatPainterCon
       c = c.unsetNodeBackgroundColor()
     }
 
-    // Clear all inline marks before applying new ones
-    c = c.unsetAllMarks()
+    // Clear only format-painter-managed marks, preserving link and others
+    c = c.unsetMark("bold").unsetMark("italic").unsetMark("underline").unsetMark("strike").unsetMark("textStyle").unsetMark("highlight")
 
     // Apply inline marks from copied format
     for (const mark of marks) {
@@ -72,7 +72,6 @@ export function useFormatPainter({ editor: providedEditor }: UseFormatPainterCon
     }
 
     c.run()
-    editor.commands.clearCopiedFormat()
   }, [editor, copiedFormat])
 
   return {
