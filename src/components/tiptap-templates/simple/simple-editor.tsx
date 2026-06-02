@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
+import { DOMParser as PMDOMParser, Node as PMNode, Slice } from "@tiptap/pm/model";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
@@ -109,6 +109,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE, sanitizeUrl, sanitizeContent } from "../../../lib/tiptap-utils";
+import { editorjsToTiptap } from "../../../migrator";
 import type { Extensions } from "@tiptap/core";
 
 // --- Styles ---
@@ -591,6 +592,23 @@ export function SimpleEditor() {
           class: "simple-editor",
         },
         handlePaste(view, event) {
+          const EDITORJS_PREFIX = 'editorjs-tiptap::';
+          const plainText = event.clipboardData?.getData('text/plain') ?? '';
+          if (plainText.startsWith(EDITORJS_PREFIX)) {
+            event.preventDefault();
+            try {
+              const editorjsData = JSON.parse(plainText.slice(EDITORJS_PREFIX.length));
+              const tiptapDoc = editorjsToTiptap(editorjsData);
+              const node = PMNode.fromJSON(view.state.schema, tiptapDoc);
+              const slice = new Slice(node.content, 0, 0);
+              const tr = view.state.tr.replaceSelection(slice);
+              view.dispatch(tr.scrollIntoView());
+            } catch (e) {
+              console.error('EditorJS paste failed:', e);
+            }
+            return true;
+          }
+
           const items = event.clipboardData?.items;
           if (!items) return false;
 
