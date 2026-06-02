@@ -347,7 +347,7 @@ const MainToolbarContent = ({
     },
     {
       element: <ApplyFormatButton key="apply-format" />,
-      estimatedWidth: 32,
+      estimatedWidth: 0,
     },
     {
       element: <ColorDropdownMenu key="color" portal={isMobile} />,

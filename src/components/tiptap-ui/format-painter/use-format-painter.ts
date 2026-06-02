@@ -24,16 +24,9 @@ export function useFormatPainter({ editor: providedEditor }: UseFormatPainterCon
   const applyFormat = useCallback(() => {
     if (!editor || !copiedFormat) return
 
-    const { marks, nodeType, nodeAttrs } = copiedFormat
+    const { marks, nodeAttrs } = copiedFormat
 
     let c = editor.chain().focus()
-
-    // Apply block type
-    if (nodeType === "heading" && nodeAttrs.level) {
-      c = c.setHeading({ level: nodeAttrs.level as 1 | 2 | 3 | 4 | 5 | 6 })
-    } else {
-      c = c.setParagraph()
-    }
 
     // Apply text alignment
     if (nodeAttrs.textAlign) {
@@ -73,12 +66,13 @@ export function useFormatPainter({ editor: providedEditor }: UseFormatPainterCon
           if (mark.attrs.fontFamily) c = c.setFontFamily(mark.attrs.fontFamily as string)
           break
         case "highlight":
-          c = c.setHighlight({ color: mark.attrs.color as string })
+          if (mark.attrs.color) c = c.setHighlight({ color: mark.attrs.color as string })
           break
       }
     }
 
     c.run()
+    editor.commands.clearCopiedFormat()
   }, [editor, copiedFormat])
 
   return {

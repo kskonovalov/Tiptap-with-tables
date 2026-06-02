@@ -1,12 +1,9 @@
-"use client"
-
-import { forwardRef, useCallback } from "react"
+import { forwardRef } from "react"
 import type { Editor } from "@tiptap/react"
 
-import { useTiptapEditor } from "../../../hooks/use-tiptap-editor"
 import { useFormatPainter } from "./use-format-painter"
+import { FormatPainterControlButton } from "./format-painter-control-button"
 import type { ButtonProps } from "../../tiptap-ui-primitive/button/index"
-import { Button } from "../../tiptap-ui-primitive/button/index"
 import { ApplyFormatIcon } from "../../tiptap-icons/apply-format-icon"
 
 export interface ApplyFormatButtonProps extends Omit<ButtonProps, "type"> {
@@ -14,38 +11,22 @@ export interface ApplyFormatButtonProps extends Omit<ButtonProps, "type"> {
 }
 
 export const ApplyFormatButton = forwardRef<HTMLButtonElement, ApplyFormatButtonProps>(
-  ({ editor: providedEditor, onClick, ...buttonProps }, ref) => {
-    const { editor } = useTiptapEditor(providedEditor)
+  ({ editor, ...buttonProps }, ref) => {
     const { applyFormat, hasCopiedFormat, canApply } = useFormatPainter({ editor })
-
-    const handleClick = useCallback(
-      (event: React.MouseEvent<HTMLButtonElement>) => {
-        onClick?.(event)
-        if (event.defaultPrevented) return
-        applyFormat()
-      },
-      [onClick, applyFormat]
-    )
 
     if (!hasCopiedFormat) return null
 
     return (
-      <Button
-        type="button"
-        disabled={!canApply}
-        data-style="ghost"
-        data-active-state="off"
-        data-disabled={!canApply}
-        role="button"
-        tabIndex={-1}
-        aria-label="Применить форматирование"
+      <FormatPainterControlButton
+        editor={editor}
+        icon={<ApplyFormatIcon className="tiptap-button-icon" />}
+        ariaLabel="Применить форматирование"
         tooltip="Применить форматирование"
-        onClick={handleClick}
+        isDisabled={!canApply}
+        onAction={applyFormat}
         {...buttonProps}
         ref={ref}
-      >
-        <ApplyFormatIcon className="tiptap-button-icon" />
-      </Button>
+      />
     )
   }
 )
