@@ -63,8 +63,4 @@ export class CopyToTiptapTune {
     }, 1500);
   }
 
-  // Required by EditorJS tune contract (called when block data is saved)
-  save(blockData: Record<string, unknown>): Record<string, unknown> {
-    return blockData;
-  }
 }

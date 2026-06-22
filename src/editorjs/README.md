@@ -14,12 +14,34 @@ import { CopyToTiptapTune } from './copy-to-tiptap-tune';
 
 const editor = new EditorJS({
   holder: 'editorjs',
+  // Применяет tune ко всем блокам глобально
+  tunes: ['copyToTiptap'],
   tools: {
     copyToTiptap: {
       class: CopyToTiptapTune,
     },
   },
 });
+```
+
+Без `tunes: ['copyToTiptap']` на верхнем уровне конфига tune зарегистрируется, но не будет привязан ни к одному блоку — кнопка не появится.
+
+Если нужно добавить tune только для определённых типов блоков, а не глобально:
+
+```ts
+tools: {
+  copyToTiptap: {
+    class: CopyToTiptapTune,
+  },
+  paragraph: {
+    class: Paragraph,
+    tunes: ['copyToTiptap'],
+  },
+  header: {
+    class: Header,
+    tunes: ['copyToTiptap'],
+  },
+},
 ```
 
 ## Использование
