@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Usage context
+
+This repo is a **reference implementation**, not a production app. The user ports changes from here into a separate codebase — code is not deployed from this repo directly. When making changes:
+- Keep implementations self-contained and portable (avoid tight coupling to demo scaffolding in `App.tsx`).
+- Prefer patterns that are easy to extract and transplant: isolated components, clear extension boundaries, minimal side-effects in module init.
+
+## EditorJS status
+
+**EditorJS is not a dependency of this project** and is not installed. What lives here:
+
+- `src/migrator/` — bidirectional JSON converter (EditorJS ↔ Tiptap). No EditorJS runtime needed; it operates on plain data objects.
+- `src/editorjs/` — contains `CopyToTiptapTune`, an EditorJS block-tune plugin **meant to be copied into the user's EditorJS project**, not used here. Import it from there, not as a runtime dep here.
+
+When working on the migrator, test it with plain JS objects matching the EditorJS block schema — no EditorJS instance required.
+
 ## Commands
 
 ```bash

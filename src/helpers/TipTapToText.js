@@ -1,10 +1,11 @@
 /**
- * Converts a TipTap document object to an HTML string.
- * Supports arbitrary nesting — tables inside lists, lists inside tables, etc.
+ * Converts a TipTap document object to a plain-text string.
+ * Each block node becomes a separate line.
+ * Tables: one row per line, cells separated by TABLE_DIVIDER.
  *
  * Usage:
  *   import { tiptapToText } from './helpers/TipTapToText.js';
- *   const html = tiptapToText(editor.getJSON());
+ *   const text = tiptapToText(editor.getJSON());
  */
 
 /**
@@ -25,204 +26,147 @@
  * @typedef {{ type: 'doc'; content: TipTapNode[] }} TipTapDocument
  */
 
-/** @type {Record<string, string>} */
-const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export const TABLE_DIVIDER = ';';
 
 /**
- * @param {string} str
+ * Recursively extracts plain text from a node subtree, ignoring block structure.
+ * Used for inline contexts (table cells, headings, paragraphs, etc.).
+ * @param {TipTapNode[] | undefined} nodes
  * @returns {string}
  */
-function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, (c) => HTML_ESCAPE_MAP[c] ?? c);
+function extractInlineText(nodes) {
+  if (!nodes?.length) return '';
+  return nodes
+    .map((n) => {
+      if (n.type === 'text') return n.text || '';
+      if (n.type === 'hardBreak') return '\n';
+      return extractInlineText(n.content);
+    })
+    .join('');
 }
 
 /**
- * @param {TipTapNode[]} [nodes]
+ * Converts block-level children to lines joined with '\n', skipping empty lines.
+ * @param {TipTapNode[] | undefined} nodes
  * @returns {string}
  */
-function childrenToHTML(nodes) {
-  if (!nodes || nodes.length === 0) return '';
-  return nodes.map(nodeToHTML).join('');
+function blockLines(nodes) {
+  if (!nodes?.length) return '';
+  return nodes.map(nodeToText).filter((s) => s !== '').join('\n');
 }
 
 /**
- * Wraps an already-escaped HTML string with the tag for one mark.
- * @param {string} html
- * @param {TipTapMark} mark
- * @returns {string}
- */
-function applyMark(html, mark) {
-  switch (mark.type) {
-    case 'bold':        return `<strong>${html}</strong>`;
-    case 'italic':      return `<em>${html}</em>`;
-    case 'underline':   return `<u>${html}</u>`;
-    case 'strike':      return `<s>${html}</s>`;
-    case 'code':        return `<code>${html}</code>`;
-    case 'highlight':   return `<mark>${html}</mark>`;
-    case 'subscript':   return `<sub>${html}</sub>`;
-    case 'superscript': return `<sup>${html}</sup>`;
-    case 'link': {
-      const href = escapeHTML(mark.attrs?.href || '');
-      const target = mark.attrs?.target ? ` target="${escapeHTML(mark.attrs.target)}"` : '';
-      return `<a href="${href}"${target}>${html}</a>`;
-    }
-    case 'textStyle': {
-      const color = mark.attrs?.color;
-      return color ? `<span style="color:${escapeHTML(color)}">${html}</span>` : html;
-    }
-    default: return html;
-  }
-}
-
-/**
- * Converts a single TipTap node of any type to its HTML string.
- * Unknown container nodes fall back to rendering their children.
- * Unknown leaf nodes return an empty string.
+ * Converts a single TipTap node to a plain-text string.
  * @param {TipTapNode} node
  * @returns {string}
  */
-function nodeToHTML(node) {
+function nodeToText(node) {
   switch (node.type) {
 
     // ── Root ──────────────────────────────────────────────────────────────────
     case 'doc':
-      return childrenToHTML(node.content);
+      return blockLines(node.content);
 
     // ── Inline ────────────────────────────────────────────────────────────────
-    case 'text': {
-      let html = escapeHTML(node.text || '');
-      for (const mark of node.marks || []) html = applyMark(html, mark);
-      return html;
-    }
+    case 'text':
+      return node.text || '';
+
     case 'hardBreak':
-      return '<br />';
+      return '\n';
 
     // ── Paragraphs & headings ─────────────────────────────────────────────────
     case 'paragraph':
-      return `<p>${childrenToHTML(node.content)}</p>`;
-
-    case 'heading': {
-      const level = node.attrs?.level || 1;
-      return `<h${level}>${childrenToHTML(node.content)}</h${level}>`;
-    }
-
-    // ── Other text blocks ─────────────────────────────────────────────────────
+    case 'heading':
     case 'blockquote':
-      return `<blockquote>${childrenToHTML(node.content)}</blockquote>`;
-
-    case 'codeBlock': {
-      const lang = node.attrs?.language;
-      const langAttr = lang ? ` class="language-${escapeHTML(lang)}"` : '';
-      return `<pre><code${langAttr}>${childrenToHTML(node.content)}</code></pre>`;
-    }
+    case 'codeBlock':
+      return extractInlineText(node.content);
 
     case 'horizontalRule':
-      return '<hr />';
+      return '';
 
     // ── Lists ─────────────────────────────────────────────────────────────────
     case 'bulletList':
-      return `<ul>${childrenToHTML(node.content)}</ul>`;
-
-    case 'orderedList': {
-      const start = node.attrs?.start;
-      const startAttr = start != null && start !== 1 ? ` start="${start}"` : '';
-      return `<ol${startAttr}>${childrenToHTML(node.content)}</ol>`;
-    }
-
+    case 'orderedList':
     case 'taskList':
-      return `<ul class="task-list">${childrenToHTML(node.content)}</ul>`;
+      return blockLines(node.content);
 
     case 'listItem':
-      return `<li>${childrenToHTML(node.content)}</li>`;
-
-    case 'taskItem': {
-      const checked = node.attrs?.checked ? ' checked' : '';
-      return `<li><input type="checkbox" disabled${checked} />${childrenToHTML(node.content)}</li>`;
-    }
+    case 'taskItem':
+      return blockLines(node.content);
 
     // ── Table ─────────────────────────────────────────────────────────────────
     case 'table':
-      return `<table>${childrenToHTML(node.content)}</table>`;
+      return (node.content ?? [])
+        .filter((r) => !r.attrs?.hidden)
+        .map(nodeToText)
+        .filter(Boolean)
+        .join('\n');
 
     case 'tableRow':
-      return node.attrs?.hidden ? '' : `<tr>${childrenToHTML(node.content)}</tr>`;
+      return node.attrs?.hidden
+        ? ''
+        : (node.content ?? []).map(nodeToText).join(TABLE_DIVIDER);
 
     case 'tableCell':
-      return `<td>${childrenToHTML(node.content)}</td>`;
-
     case 'tableHeader':
-      return `<th>${childrenToHTML(node.content)}</th>`;
+      return extractInlineText(node.content);
 
     // ── Media ─────────────────────────────────────────────────────────────────
-    case 'image': {
-      const { src = '', alt = '', title = '' } = node.attrs || {};
-      const titleAttr = title ? ` title="${escapeHTML(title)}"` : '';
-      return `<img src="${escapeHTML(src)}" alt="${escapeHTML(alt)}"${titleAttr} />`;
-    }
+    case 'image':
+      return node.attrs?.alt || '';
 
     case 'video':
-      // attrs.content is a raw iframe/embed HTML string — not escaped intentionally
-      return `<div class="video">${node.attrs?.content || ''}</div>`;
+      return '';
 
     case 'file': {
-      const { url = '', title = '', extension = '' } = node.attrs || {};
-      const label = escapeHTML(title || url);
-      const ext = extension ? ` (${escapeHTML(extension)})` : '';
-      return `<a href="${escapeHTML(url)}" class="file">${label}${ext}</a>`;
+      const { url = '', title = '' } = node.attrs || {};
+      return title || url;
     }
 
     // ── Details / toggle ──────────────────────────────────────────────────────
     case 'details':
-      return `<details${node.attrs?.open ? ' open' : ''}>${childrenToHTML(node.content)}</details>`;
+    case 'detailsContent':
+      return blockLines(node.content);
 
     case 'detailsSummary':
-      return `<summary>${childrenToHTML(node.content)}</summary>`;
-
-    case 'detailsContent':
-      return childrenToHTML(node.content);
+      return extractInlineText(node.content);
 
     // ── Alert ─────────────────────────────────────────────────────────────────
-    case 'alert': {
-      const type = escapeHTML(node.attrs?.type || 'primary');
-      return `<div class="alert alert-${type}">${childrenToHTML(node.content)}</div>`;
-    }
+    case 'alert':
+      return blockLines(node.content);
 
     // ── Warning ───────────────────────────────────────────────────────────────
     case 'warning':
-      return `<div class="warning">${childrenToHTML(node.content)}</div>`;
+      return blockLines(node.content);
 
     case 'warningTitle':
-      return `<strong class="warning-title">${childrenToHTML(node.content)}</strong>`;
-
     case 'warningMessage':
-      return `<div class="warning-message">${childrenToHTML(node.content)}</div>`;
+      return extractInlineText(node.content);
 
     // ── Columns ───────────────────────────────────────────────────────────────
     case 'columns':
-      return `<div class="columns">${childrenToHTML(node.content)}</div>`;
-
     case 'columnItem':
-      return `<div class="column">${childrenToHTML(node.content)}</div>`;
+      return blockLines(node.content);
 
     // ── Fallback ──────────────────────────────────────────────────────────────
     default:
-      // Container nodes: render children. Leaf nodes: empty string.
-      return childrenToHTML(node.content);
+      if (node.text != null) return node.text;
+      return blockLines(node.content);
   }
 }
 
 /**
- * Converts a TipTap document (or any TipTap node) to an HTML string.
+ * Converts a TipTap document (or any TipTap node) to a plain-text string.
  *
  * @param {TipTapDocument | TipTapNode} doc
  * @returns {string}
  *
  * @example
- * const html = tiptapToText(editor.getJSON());
- * // '<h1>Title</h1><p>Hello <strong>world</strong></p>'
+ * const text = tiptapToText(editor.getJSON());
+ * // 'Title\nHello world\nCol1;Col2\nVal1;Val2'
  */
 export function tiptapToText(doc) {
-  return nodeToHTML(/** @type {TipTapNode} */ (doc));
+  return nodeToText(/** @type {TipTapNode} */ (doc));
 }
 
 export default tiptapToText;
