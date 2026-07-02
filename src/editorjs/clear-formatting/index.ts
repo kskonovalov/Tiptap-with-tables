@@ -1,7 +1,7 @@
 /**
  * Import utils
  */
-import { SelectionUtils } from './utils/selection.js';
+import { SelectionUtils } from './utils/selection';
 // awaiting PR to be merged: https://github.com/codex-team/icons/pull/42
 //import { IconClearFormatting } from '@codexteam/icons';
 
@@ -9,6 +9,27 @@ import { SelectionUtils } from './utils/selection.js';
  * Import styles
  */
 import './index.css';
+
+// Minimal EditorJS inline-tool API types — no external deps required
+interface EditorAPI {
+  i18n: { t(key: string): string };
+  styles: { inlineToolButton: string; inlineToolButtonActive: string };
+  inlineToolbar: { close(): void };
+}
+
+interface ClearFormattingConfig {
+  /** Горячая клавиша для вызова инструмента */
+  shortcut?: string | null;
+  /** Закрывать inline toolbar сразу после нажатия */
+  closeOnClick?: boolean;
+  /** HTML-иконка кнопки */
+  icon?: string;
+}
+
+interface InlineToolConstructorOptions {
+  api: EditorAPI;
+  config?: ClearFormattingConfig;
+}
 
 const DICTIONARY = {
   clearFormatting: 'Очистить форматирование',
@@ -25,70 +46,65 @@ export default class ClearFormatting {
 
   /**
    * Default configuration
-   * @param {object} config
    */
-  config = {
+  private config: Required<ClearFormattingConfig> = {
     shortcut: null,
     closeOnClick: false,
     // for as long there is no icon for this tool in codex/icons, we will use the following svg
     icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.7,7h3.1M17.1,9l.7-1.8c0-.1,0-.2-.1-.2h-3.8M11.1,14.6l-.9,2.4M13.8,7l-.7,2M10.2,17h-2M10.2,17h2"/><line x1="7" x2="17.8" y1="7" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>',
-  }
+  };
+
+  private api: EditorAPI;
 
   /**
    * State of the tool
-   * @type {boolean}
    */
-  state = false;
+  private state = false;
 
   /**
-   * block in which the selection is made
-   * will be set when checkState is called
-   * @type {HTMLElement}
+   * block in which the selection is made — set when checkState is called
    */
-  block = null;
+  private block: HTMLElement | null = null;
+
+  private button: HTMLButtonElement | null = null;
 
   /**
    * Specifies Tool as Inline Toolbar Tool
-   * @returns {boolean}
    */
-  static get isInline() {
+  static get isInline(): boolean {
     return true;
   }
 
   /**
    * Sanitizer Rule
-   * @returns {object}
    */
-  static get sanitize() {
+  static get sanitize(): undefined {
     // this tool does not create any HTML element, so no need to sanitize
+    return undefined;
   }
 
   /**
    * Title for hover-tooltip
-   * @returns {string}
    */
-  get title() {
+  get title(): string {
     return this.api.i18n.t(DICTIONARY.clearFormatting);
   }
 
   /**
    * Set a shortcut
-   * @returns {string}
    */
-  get shortcut() {
-    if (this.config.shortcut !== null) {
-      return this.config.shortcut;
-    }
+  get shortcut(): string | undefined {
+    return this.config.shortcut ?? undefined;
   }
 
   /**
    * Initialize basic data
    *
-   * @param {object} options - tools constructor params
-   * @param {object} options.config — initial config for the tool
-   * @param {object} options.api — methods from Core
+   * @param options - tools constructor params
+   * @param options.config — initial config for the tool
+   * @param options.api — methods from Core
    */
-  constructor({ config, api }) {
+  constructor({ config, api }: InlineToolConstructorOptions) {
     this.api = api;
     this.config = { ...this.config, ...config };
 
@@ -98,14 +114,8 @@ export default class ClearFormatting {
 
   /**
    * Create element with buttons for toolbar
-   *
-   * @returns {HTMLButtonElement}
    */
-  render() {
-    /**
-     * Create wrapper for buttons
-     * @type {HTMLButtonElement}
-     */
+  render(): HTMLButtonElement {
     this.button = document.createElement('button');
     this.button.type = 'button';
     this.button.innerHTML = this.config.icon;
@@ -118,10 +128,9 @@ export default class ClearFormatting {
    * Handle clicks on the Inline Toolbar icon
    * Снимает форматирование с выделенного текста
    *
-   * @param {Range} range — selected range
-   * @returns {void}
+   * @param range — selected range
    */
-  surround(range) {
+  surround(range: Range | null): void {
     if (!range) {
       return;
     }
@@ -138,10 +147,9 @@ export default class ClearFormatting {
   /**
    * Check for a tool's state
    *
-   * @param {Selection} selection — selection to be passed from Core
-   * @returns {void}
+   * @param selection — selection to be passed from Core
    */
-  checkState(selection) {
+  checkState(selection: Selection): void {
     // get the parent div with class cdx-block in which the selection is made. This is the block node
     this.block = SelectionUtils.findBlock(selection);
 
@@ -155,12 +163,9 @@ export default class ClearFormatting {
 
   /**
    * Update the state of the tool
-   * @returns {void}
    */
-  updateState() {
-    // for some reason this.api is sometimes undefined, so we need to check for it to prevent errors
-    // TODO: need to do further investigation to find out why this is happening
-    if (this.api === undefined || this.button === undefined) return;
+  updateState(): void {
+    if (this.api === undefined || this.button === null) return;
 
     this.state = SelectionUtils.hasFormatting(this.block);
 
@@ -172,9 +177,8 @@ export default class ClearFormatting {
 
   /**
    * Function called with Inline Toolbar closing
-   * @returns {void}
    */
-  clear() {
+  clear(): void {
     if (this.block) {
       this.block.removeEventListener('input', this.updateState);
     }

@@ -5,17 +5,16 @@ export class SelectionUtils {
   /**
    * Check if the selection has formatting
    *
-   * @param {HTMLElement} context — block element the selection lives in
-   * @returns {boolean}
+   * @param context — block element the selection lives in
    */
-  static hasFormatting(context) {
+  static hasFormatting(context: HTMLElement | null): boolean {
     if (context === undefined || context === null) return false;
 
-    let sel = window.getSelection();
+    const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return false; // No selection
 
     // Check if the selection includes inline tags
-    let range = sel.getRangeAt(0);
+    const range = sel.getRangeAt(0);
 
     // Check if the selection contains a html tag (opening, close or both)
     if (range.cloneContents().children.length) {
@@ -23,7 +22,7 @@ export class SelectionUtils {
     }
 
     // check if the selection is within an inline tag (i.e. the inline tag is the parent of the selection and not context)
-    let node = range.commonAncestorContainer;
+    let node: Node | null = range.commonAncestorContainer;
     if (node.nodeType === Node.TEXT_NODE) {
       node = node.parentElement;
     }
@@ -40,23 +39,22 @@ export class SelectionUtils {
    *  - expand selection to include the inline tag if the contents of the inline tag equals that of the selection (use case when new formatting was applied to the selection before clearing formatting)
    *  - needs improvement to handle selection within inline tag:
    *    For example, when clearing formatting of 'on this': "some <b>emphasis on this text</b> and some more text" should become "some <b>emphasis</b> on this <b>text</b> and some more text"
-   * @returns {void}
    */
-  static clearFormatting() {
-    let sel = window.getSelection();
+  static clearFormatting(): void {
+    const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
 
-    let range = sel.getRangeAt(0);
+    const range = sel.getRangeAt(0);
 
     // Create a new Range to clone the contents, so we don't modify the document yet
-    let cloneRange = range.cloneRange();
-    let selectedText = cloneRange.extractContents();
+    const cloneRange = range.cloneRange();
+    const selectedText = cloneRange.extractContents();
 
     // Strip all HTML elements from the selected text
-    let textContent = selectedText.textContent;
+    const textContent = selectedText.textContent ?? '';
 
     // Create a text node with the stripped text
-    let textNode = document.createTextNode(textContent);
+    const textNode = document.createTextNode(textContent);
 
     // Replace the selected text with the text node in the original Range
     range.deleteContents();
@@ -69,15 +67,13 @@ export class SelectionUtils {
 
   /**
    * Find the block node in which the selection is made
-   * @param {Selection} selection
-   * @returns {Node}
    */
-  static findBlock(selection) {
-    let node = selection.anchorNode;
+  static findBlock(selection: Selection): HTMLElement | null {
+    const node = selection.anchorNode;
     if (!node) return null;
 
     return node.nodeType === Node.TEXT_NODE
-      ? node.parentElement.closest('.cdx-block')
-      : node.closest('.cdx-block');
+      ? (node.parentElement?.closest('.cdx-block') ?? null)
+      : (node as HTMLElement).closest('.cdx-block');
   }
 }
