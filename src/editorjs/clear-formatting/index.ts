@@ -135,9 +135,9 @@ export default class ClearFormatting {
       return;
     }
 
-    // needs improvement to handle selection within inline tag
+    // needs improvement to handle a partial selection within an inline tag
     // we will need to implement something like rangy.splitBoundaries()
-    SelectionUtils.clearFormatting();
+    SelectionUtils.clearFormatting(this.block);
 
     if (this.config.closeOnClick) {
       this.api.inlineToolbar.close();

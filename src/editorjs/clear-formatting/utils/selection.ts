@@ -35,45 +35,72 @@ export class SelectionUtils {
 
   /**
    * Clear formatting from the selected text
+   *
+   * @param context — the editable block element (the `contenteditable` node).
+   *   Used as the boundary up to which inline wrappers may be unwrapped; the
+   *   element itself is never removed.
+   *
    * TODO:
-   *  - expand selection to include the inline tag if the contents of the inline tag equals that of the selection (use case when new formatting was applied to the selection before clearing formatting)
-   *  - needs improvement to handle selection within inline tag:
-   *    For example, when clearing formatting of 'on this': "some <b>emphasis on this text</b> and some more text" should become "some <b>emphasis</b> on this <b>text</b> and some more text"
+   *  - needs improvement to handle a *partial* selection within an inline tag:
+   *    clearing 'on this' in "some <b>emphasis on this text</b> and more" should
+   *    yield "some <b>emphasis</b> on this <b>text</b> and more". Currently a
+   *    partial selection inside a single wrapper is left wrapped.
    */
-  static clearFormatting(): void {
+  static clearFormatting(context: HTMLElement | null): void {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
+    if (range.collapsed) return;
 
-    // Create a new Range to clone the contents, so we don't modify the document yet
-    const cloneRange = range.cloneRange();
-    const selectedText = cloneRange.extractContents();
+    // Plain text of the selection — non-destructive and strips every tag.
+    // (The previous cloneRange().extractContents() actually mutated the DOM.)
+    const text = range.toString();
+    const textNode = document.createTextNode(text);
 
-    // Strip all HTML elements from the selected text
-    const textContent = selectedText.textContent ?? '';
-
-    // Create a text node with the stripped text
-    const textNode = document.createTextNode(textContent);
-
-    // Replace the selected text with the text node in the original Range
+    // Replace the selected content with the plain text node
     range.deleteContents();
     range.insertNode(textNode);
 
-    // Restore selection
+    // If the selection covered the *entire* content of one or more inline
+    // wrappers (e.g. a <span>/<b> around the whole text, or a whole heading),
+    // the text node now sits *inside* those wrappers and the formatting element
+    // survives. Unwrap every ancestor between the text node and the editable
+    // block whose only child is our text node.
+    let wrapper = textNode.parentElement;
+    while (
+      wrapper !== null &&
+      wrapper !== context &&
+      wrapper.childNodes.length === 1 &&
+      wrapper.firstChild === textNode
+    ) {
+      wrapper.replaceWith(textNode);
+      wrapper = textNode.parentElement;
+    }
+
+    // Restore selection over the inserted text
     sel.removeAllRanges();
-    sel.addRange(range);
+    const restored = document.createRange();
+    restored.selectNode(textNode);
+    sel.addRange(restored);
   }
 
   /**
-   * Find the block node in which the selection is made
+   * Find the editable container in which the selection is made.
+   *
+   * We look for the nearest `contenteditable` element rather than the
+   * `.cdx-block` class: that class is added only by the Paragraph tool, while
+   * Header (and other tools) render their own editable element without it, so
+   * `.cdx-block` leaves the tool disabled on headings. The editable element is
+   * also the correct `context` for `hasFormatting` and the boundary for
+   * `clearFormatting`, since it is the direct parent of the block's text.
    */
   static findBlock(selection: Selection): HTMLElement | null {
     const node = selection.anchorNode;
     if (!node) return null;
 
-    return node.nodeType === Node.TEXT_NODE
-      ? (node.parentElement?.closest('.cdx-block') ?? null)
-      : (node as HTMLElement).closest('.cdx-block');
+    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement);
+
+    return el?.closest<HTMLElement>('[contenteditable="true"]') ?? null;
   }
 }
