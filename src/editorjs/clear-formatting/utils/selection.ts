@@ -66,16 +66,27 @@ export class SelectionUtils {
     // wrappers (e.g. a <span>/<b> around the whole text, or a whole heading),
     // the text node now sits *inside* those wrappers and the formatting element
     // survives. Unwrap every ancestor between the text node and the editable
-    // block whose only child is our text node.
+    // block whose text is exactly our inserted text.
+    //
+    // We compare by `textContent` rather than child count on purpose:
+    // `deleteContents()` + `insertNode()` leave behind empty text nodes (a
+    // selection inside a single text node gets split), so the wrapper often has
+    // more than one child even when our text is its only real content.
     let wrapper = textNode.parentElement;
-    while (
-      wrapper !== null &&
-      wrapper !== context &&
-      wrapper.childNodes.length === 1 &&
-      wrapper.firstChild === textNode
-    ) {
+    while (wrapper !== null && wrapper !== context && wrapper.textContent === text) {
       wrapper.replaceWith(textNode);
       wrapper = textNode.parentElement;
+    }
+
+    // Remove inline wrappers that `deleteContents()` emptied but left in place
+    // (e.g. the second of two partially-selected spans). Scoped to the current
+    // block so we don't touch unrelated content.
+    if (context) {
+      context
+        .querySelectorAll('span, b, strong, i, em, u, s, mark, a, font')
+        .forEach((el) => {
+          if (el.textContent === '') el.remove();
+        });
     }
 
     // Restore selection over the inserted text
