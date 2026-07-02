@@ -6,6 +6,9 @@ import type { InlineTool } from '@editorjs/editorjs';
  * Self-contained: depends only on rangy being present on `window`
  * (rangy-core + rangy-selectionsaverestore, loaded via <script> in index.html).
  * Strips inline formatting tags from the current selection while keeping links.
+ *
+ * NOTE: this build is INSTRUMENTED with `[clearFmt]` console.log checkpoints so
+ * we can see where it stops in your environment. Remove them once diagnosed.
  */
 
 // Minimal shape of the rangy API we use. Declared locally (not as a global
@@ -55,25 +58,31 @@ export default class ClearFormatStandalone implements InlineTool {
   }
 
   public surround(range: Range | null): void {
+    console.log('[clearFmt] 1 called; range=', range, 'collapsed=', range?.collapsed);
+
     const rangy = getRangy();
+    console.log('[clearFmt] 2 rangy present=', !!rangy);
     if (!rangy) {
-      // rangy not loaded — nothing we can do reliably
       return;
     }
 
     // Make sure rangy reads the range EditorJS handed us.
     if (range && !range.collapsed) {
       const nativeSel = window.getSelection();
-      nativeSel?.removeAllRanges();
-      nativeSel?.addRange(range);
+      if (nativeSel) {
+        nativeSel.removeAllRanges();
+        nativeSel.addRange(range);
+      }
     }
 
     const sel = rangy.getSelection();
+    console.log('[clearFmt] 3 rangy rangeCount=', sel?.rangeCount);
     if (!sel || sel.rangeCount === 0) {
       return;
     }
 
     const rangyRange = sel.getRangeAt(0);
+    console.log('[clearFmt] 4 selected text=', JSON.stringify(rangyRange?.toString()));
     if (!rangyRange || rangyRange.toString() === '') {
       return;
     }
@@ -86,6 +95,7 @@ export default class ClearFormatStandalone implements InlineTool {
     const saved = rangy.saveSelection();
 
     const textNodes = rangyRange.getNodes([Node.TEXT_NODE]);
+    console.log('[clearFmt] 5 textNodes=', textNodes.length);
 
     // Gather the inline wrappers to unwrap: walk up from each text node to the
     // block boundary, collecting formatting tags and skipping links.
@@ -109,11 +119,19 @@ export default class ClearFormatStandalone implements InlineTool {
       }
     }
 
+    console.log(
+      '[clearFmt] 6 toUnwrap=',
+      toUnwrap.size,
+      Array.from(toUnwrap).map((e) => e.tagName),
+    );
+
     toUnwrap.forEach((el) => ClearFormatStandalone.unwrap(el));
 
     // Restore the user's selection and clean up rangy's marker nodes.
     rangy.restoreSelection(saved);
     rangy.removeMarkers(saved);
+
+    console.log('[clearFmt] 7 done');
   }
 
   /** Move an element's children up to its parent and drop the element. */
